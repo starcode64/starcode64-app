@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>スターコード64</title>
+
+<style>
+body{
+font-family: sans-serif;
+background:#0f172a;
+color:white;
+text-align:center;
+padding:20px;
+}
+
+.card{
+background:#1e293b;
+padding:20px;
+border-radius:12px;
+margin-top:20px;
+}
+
+button{
+background:#6366f1;
+color:white;
+border:none;
+padding:12px 20px;
+border-radius:8px;
+font-size:16px;
+}
+</style>
+
+</head>
+
+<body>
+
+<h1>スターコード64</h1>
+
+<div class="card">
+<p>あなたの意識コードを診断します</p>
+
+<button onclick="diagnose()">診断する</button>
+
+<h2 id="result"></h2>
+
+</div>
+
+<script>
+function diagnose(){
+let num = Math.floor(Math.random()*64)+1;
+document.getElementById("result").innerText =
+"あなたのコード：" + num;
+}
+</script>
+
+</body>
+</html>
