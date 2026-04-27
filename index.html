@@ -8,7 +8,7 @@
 <style>
 body{
 font-family: sans-serif;
-background:#0f172a;
+background:linear-gradient(180deg,#020617,#0f172a,#1e1b4b);
 color:white;
 text-align:center;
 padding:20px;
@@ -29,6 +29,65 @@ padding:12px 20px;
 border-radius:8px;
 font-size:16px;
 }
+
+/* ホイール */
+.wheel-wrap{
+margin-top:30px;
+display:flex;
+justify-content:center;
+}
+
+.wheel{
+width:260px;
+height:260px;
+border-radius:50%;
+background:
+radial-gradient(circle at center,
+rgba(99,102,241,0.2) 0%,
+rgba(15,23,42,0.8) 60%,
+rgba(2,6,23,1) 100%);
+position:relative;
+box-shadow:
+0 0 40px rgba(139,92,246,0.4),
+inset 0 0 30px rgba(99,102,241,0.3);
+}
+
+.center-light{
+position:absolute;
+top:50%;
+left:50%;
+transform:translate(-50%,-50%);
+width:18px;
+height:18px;
+border-radius:50%;
+background:linear-gradient(
+135deg,
+#d4af37,
+#ffffff,
+#c0c0c0,
+#ffd700
+);
+box-shadow:
+0 0 8px rgba(255,215,0,0.9),
+0 0 18px rgba(192,192,192,0.8),
+0 0 30px rgba(255,255,255,0.6);
+animation: pulse 3s ease-in-out infinite;
+}
+
+@keyframes pulse{
+0%{
+transform:translate(-50%,-50%) scale(0.9);
+opacity:0.7;
+}
+50%{
+transform:translate(-50%,-50%) scale(1.3);
+opacity:1;
+}
+100%{
+transform:translate(-50%,-50%) scale(0.9);
+opacity:0.7;
+}
+}
 </style>
 
 </head>
@@ -43,6 +102,12 @@ font-size:16px;
 <button onclick="diagnose()">診断する</button>
 
 <h2 id="result"></h2>
+
+<div class="wheel-wrap">
+<div class="wheel">
+<div class="center-light"></div>
+</div>
+</div>
 
 </div>
 
