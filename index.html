@@ -2,190 +2,206 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>スターコード64 - K段階（完成）</title>
+<title>スターコード64</title>
 
 <style>
-body {
-  background:#0b0f1a;
-  color:#fff;
+body{
   font-family: sans-serif;
-  text-align:center;
+  margin: 0;
+  padding: 0;
 }
 
-.outerCircle {
-  width: 520px;
-  height: 520px;
-  border: 2px solid #2a3a55;
-  border-radius: 50%;
-  margin: 40px auto;
-  position: relative;
-  animation: rotate 40s linear infinite;
+/* ■ 画面共通 */
+.screen{
+  display: none;
+  padding: 20px;
 }
 
-.innerCircle {
-  width: 340px;
-  height: 340px;
-  border: 2px solid #3a4f6e;
-  border-radius: 50%;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%,-50%);
-  animation: rotateReverse 25s linear infinite;
+.active{
+  display: block;
 }
 
-.segment {
-  position: absolute;
-  width: 2px;
-  height: 260px;
-  background: rgba(255,255,255,0.05);
-  top: 0;
-  left: 50%;
-  transform-origin: bottom;
+/* ■ スタート画面 */
+#startScreen{
+  text-align: center;
+  margin-top: 80px;
 }
 
-.dotOuter, .dotInner {
-  border-radius: 50%;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  transition: all 0.6s ease;
-  box-shadow: 0 0 16px;
+/* ■ 入力 */
+input{
+  display: block;
+  margin: 10px auto;
+  padding: 8px;
+  width: 220px;
 }
 
-.observer {
-  width: 10px;
-  height: 10px;
-  background: #ffffff;
-  border-radius: 50%;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  box-shadow: 0 0 10px #ffffff;
-}
-
-#codeDisplay, #stateDisplay, #autoDisplay {
-  font-size: 14px;
+/* ■ ボタン */
+button{
+  padding: 10px 16px;
   margin-top: 10px;
+}
+
+/* ■ 結果 */
+#resultText{
   white-space: pre-line;
-  color:#7df9ff;
+  margin-top: 20px;
+  padding: 10px;
+  border: 1px solid #ccc;
 }
 
-button {
-  padding:10px 20px;
-  font-size:16px;
-  margin-top:20px;
+/* ■ canvas */
+canvas{
+  display: block;
+  margin: 20px auto;
+  border: 1px solid #ddd;
 }
-
-@keyframes rotate {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-@keyframes rotateReverse {
-  0% { transform: translate(-50%,-50%) rotate(0deg); }
-  100% { transform: translate(-50%,-50%) rotate(-360deg); }
-}
-
 </style>
 </head>
 
 <body>
 
-<h2>スターコード64 - K段階（自己生成完成モデル）</h2>
+<!-- ■ スタート画面 -->
+<div id="startScreen" class="screen active">
 
-<div class="outerCircle" id="outerCircle">
+  <h1>スターコード64</h1>
+  <p>あなたの構造を解析します</p>
 
-  <div class="observer"></div>
-
-  <div class="innerCircle">
-    <div class="dotInner" id="dotInner"></div>
-  </div>
-
-  <div class="dotOuter" id="dotOuter"></div>
+  <button onclick="goInput()">開始</button>
 
 </div>
 
-<input id="inputCode" placeholder="コード（1〜64）">
-<br>
-<button onclick="runCode()">手動実行</button>
-<button onclick="toggleAuto()">自動モード</button>
+<!-- ■ 入力画面 -->
+<div id="inputScreen" class="screen">
 
-<div id="codeDisplay">コード：--</div>
-<div id="stateDisplay">状態：--</div>
-<div id="autoDisplay">自動：OFF</div>
+  <h2>入力情報</h2>
+
+  <input id="birthDate" placeholder="生年月日（例：1990-01-01）">
+  <input id="birthTime" placeholder="出生時刻（例：12:30）">
+  <input id="birthPlace" placeholder="出生地（例：Tokyo）">
+
+  <button onclick="startAnalysis()">診断する</button>
+
+</div>
+
+<!-- ■ 結果画面 -->
+<div id="resultScreen" class="screen">
+
+  <h2>診断結果</h2>
+
+  <div id="resultText"></div>
+
+  <canvas id="canvas" width="400" height="400"></canvas>
+
+  <button onclick="backInput()">戻る</button>
+
+</div>
 
 <script>
 
-const TOTAL = 64;
-const radiusOuter = 210;
-const radiusInner = 120;
+let stats = Array(64).fill(0);
 
-const stats = Array(64).fill(0);
-const history = [];
+// ----------------------
+// ■ 画面切替
+// ----------------------
+function showScreen(id){
 
-let autoMode = false;
-let autoInterval = null;
+  document.querySelectorAll(".screen").forEach(s=>{
+    s.classList.remove("active");
+  });
 
-// 円
-const outerCircle = document.getElementById("outerCircle");
-
-for(let i=0;i<TOTAL;i++){
-  const line = document.createElement("div");
-  line.className = "segment";
-  line.style.transform = `rotate(${i * (360 / TOTAL)}deg)`;
-  outerCircle.appendChild(line);
+  document.getElementById(id).classList.add("active");
 }
 
-// 移動
-function move(code){
-
-  const angle = (code - 1) * (360 / TOTAL);
-  const rad = angle * Math.PI / 180;
-
-  const x = Math.cos(rad) * radiusOuter;
-  const y = Math.sin(rad) * radiusOuter;
-
-  document.getElementById("dotOuter").style.transform =
-    `translate(-50%, -50%) translate(${x}px, ${y}px)`;
+function goInput(){
+  showScreen("inputScreen");
 }
 
-// 内円
-function moveInner(code){
-
-  const angle = (code - 1) * (360 / TOTAL);
-  const rad = angle * Math.PI / 180;
-
-  const x = Math.cos(rad) * radiusInner;
-  const y = Math.sin(rad) * radiusInner;
-
-  document.getElementById("dotInner").style.transform =
-    `translate(-50%, -50%) translate(${x}px, ${y}px)`;
+function backInput(){
+  showScreen("inputScreen");
 }
 
-// 状態分析
-function analyzeState(){
+// ----------------------
+// ■ 初期化＆診断開始
+// ----------------------
+function startAnalysis(){
 
-  let total = 0;
-  let max = 0;
+  let place = document.getElementById("birthPlace").value;
 
   for(let i=0;i<64;i++){
-    total += stats[i];
-    if(stats[i] > max) max = stats[i];
+
+    let bias = 0;
+
+    if(place.includes("Tokyo")){
+      if(i % 8 === 4) bias = 2;
+    }
+
+    stats[i] = Math.random()*3 + bias;
   }
 
-  const ratio = max / (total || 1);
+  showScreen("resultScreen");
 
-  if(total < 5) return "未収束";
-  if(ratio > 0.6) return "集中";
-  if(ratio > 0.3) return "安定";
-  return "拡散";
+  render();
 }
 
-// 予測（最頻）
-function predict(){
+// ----------------------
+// ■ 64意味
+// ----------------------
+function getMeaning(i){
+
+  const m = [
+    "発火","分岐","衝動","接触","反応","調整","集中","臨界",
+    "違和感","比較","分類","意味付与","誤認","再解釈","確信","揺らぎ",
+    "探索","試行","拡張","模倣","適応","接続","増幅","過剰",
+    "構造化","安定","ルール化","反復","維持","抵抗","硬化","停滞",
+    "崩壊","解体","混乱","再編","再定義","逆転","融解","転換",
+    "統合","調和","融合","受容","共鳴","整列","安定化","静寂",
+    "俯瞰","抽象","圧縮","透明","非局在","拡張意識","統合知","境界消失",
+    "回帰","循環","完成","沈静","再起動","無","純化","完全循環"
+  ];
+
+  return m[i-1];
+}
+
+// ----------------------
+// ■ 円マップ描画
+// ----------------------
+function draw(){
+
+  const canvas = document.getElementById("canvas");
+  const ctx = canvas.getContext("2d");
+
+  ctx.clearRect(0,0,400,400);
+
+  const cx = 200;
+  const cy = 200;
+  const r = 150;
+
+  for(let i=0;i<64;i++){
+
+    let angle = (Math.PI*2/64)*i;
+    let v = stats[i];
+
+    let x = cx + Math.cos(angle)*r*(v/5);
+    let y = cy + Math.sin(angle)*r*(v/5);
+
+    ctx.beginPath();
+    ctx.arc(x,y,3,0,Math.PI*2);
+    ctx.fillStyle = "rgba(0,0,0,0.6)";
+    ctx.fill();
+  }
+
+  ctx.beginPath();
+  ctx.arc(cx,cy,r,0,Math.PI*2);
+  ctx.strokeStyle = "#ccc";
+  ctx.stroke();
+}
+
+// ----------------------
+// ■ 分析テキスト
+// ----------------------
+function getReport(){
+
+  let sum = stats.reduce((a,b)=>a+b,0)/64;
 
   let max = 0;
   let idx = 0;
@@ -197,58 +213,22 @@ function predict(){
     }
   }
 
-  return idx + 1;
+  return ""
+  + "■ 平均構造値：" + sum.toFixed(2) + "\n\n"
+  + "■ 最も強い領域：" + getMeaning(idx+1) + "\n\n"
+  + "■ 解釈：\n"
+  + "現在のあなたは「" + getMeaning(idx+1) + "」の性質が強く出ています。\n"
+  + "この領域を活かすことで、流れが安定します。";
 }
 
-// 実行
-function runCode(codeInput){
+// ----------------------
+// ■ 画面描画
+// ----------------------
+function render(){
 
-  let code;
+  document.getElementById("resultText").innerText = getReport();
 
-  if(typeof codeInput === "number"){
-    code = codeInput;
-  } else {
-    code = parseInt(document.getElementById("inputCode").value);
-  }
-
-  if(isNaN(code) || code < 1 || code > 64){
-    return;
-  }
-
-  history.push(code);
-  stats[code - 1]++;
-
-  move(code);
-  moveInner(code);
-
-  document.getElementById("codeDisplay").innerText =
-    "コード：" + code +
-    "\n履歴：" + history.slice(-10).join(" → ");
-
-  document.getElementById("stateDisplay").innerText =
-    "状態：" + analyzeState() +
-    "\n予測：" + predict();
-}
-
-// 自動生成
-function autoStep(){
-  const next = predict();
-  runCode(next);
-}
-
-// 自動切替
-function toggleAuto(){
-
-  autoMode = !autoMode;
-
-  document.getElementById("autoDisplay").innerText =
-    "自動：" + (autoMode ? "ON" : "OFF");
-
-  if(autoMode){
-    autoInterval = setInterval(autoStep, 2000);
-  } else {
-    clearInterval(autoInterval);
-  }
+  draw();
 }
 
 </script>
