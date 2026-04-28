@@ -8,8 +8,8 @@
 body{
 margin:0;
 font-family:sans-serif;
-background: radial-gradient(circle at top,#0b1020,#02030a);
-color:#e6e6e6;
+background:#05070f;
+color:white;
 }
 
 .screen{
@@ -18,18 +18,7 @@ min-height:100vh;
 padding:40px;
 }
 
-.active{
-display:block;
-}
-
-#startScreen{
-text-align:center;
-}
-
-#startScreen h1{
-margin-top:120px;
-letter-spacing:3px;
-}
+.active{display:block;}
 
 input{
 display:block;
@@ -44,244 +33,175 @@ border-radius:6px;
 
 button{
 padding:12px 18px;
+background:#4a7dff;
 border:none;
+color:white;
 border-radius:6px;
-background:linear-gradient(90deg,#4a7dff,#6bd4ff);
-font-weight:bold;
-cursor:pointer;
 }
 
 #resultText{
 white-space:pre-line;
 margin-top:20px;
 padding:15px;
-background:rgba(20,25,50,0.5);
-border:1px solid #2a3355;
+background:#11182c;
 border-radius:8px;
-line-height:1.6;
 }
 
 canvas{
 margin-top:20px;
-background:#02030a;
-border-radius:50%;
-}
-
-.backBtn{
-background:#222b44;
-color:white;
 }
 </style>
 </head>
 
 <body>
 
-<!-- スタート -->
 <div id="startScreen" class="screen active">
 <h1>STAR CODE 64</h1>
-<p>Self Structure Analysis</p>
-<button onclick="goInput()">START</button>
+<button onclick="show('inputScreen')">START</button>
 </div>
 
-<!-- 入力 -->
 <div id="inputScreen" class="screen">
 <h2>入力</h2>
-<input id="birthDate" placeholder="生年月日">
-<input id="birthTime" placeholder="出生時刻">
+
+<input id="birthDate" placeholder="生年月日 1990-01-01">
+<input id="birthTime" placeholder="出生時刻 12:30">
 <input id="birthPlace" placeholder="出生地">
-<button onclick="run()">診断実行</button>
+
+<button onclick="run()">診断</button>
 </div>
 
-<!-- 結果 -->
 <div id="resultScreen" class="screen">
 <h2>診断結果</h2>
 <div id="resultText"></div>
 <canvas id="canvas" width="400" height="400"></canvas>
 <br>
-<button class="backBtn" onclick="back()">戻る</button>
+<button onclick="show('inputScreen')">戻る</button>
 </div>
 
 <script>
 
-let stats = Array(64).fill(0);
+let stats=[];
 
 function show(id){
-document.querySelectorAll(".screen").forEach(e=>e.classList.remove("active"));
-document.getElementById(id).classList.add("active");
+document.querySelectorAll(".screen").forEach(e=>e.classList.remove("active"))
+document.getElementById(id).classList.add("active")
 }
 
-function goInput(){show("inputScreen")}
-function back(){show("inputScreen")}
-
-// 診断生成
 function run(){
 
-let seed=Math.random()*1000;
+let d=document.getElementById("birthDate").value
+let t=document.getElementById("birthTime").value
+let p=document.getElementById("birthPlace").value
+
+let seed=(d+t+p).split("").reduce((a,b)=>a+b.charCodeAt(0),0)
+
+stats=[]
 
 for(let i=0;i<64;i++){
-stats[i]=Math.abs(Math.sin(seed+i)*5)+Math.random()*2;
+let v=Math.abs(Math.sin(seed*(i+1))*10)
+stats.push(v)
 }
 
-show("resultScreen");
-render();
+show("resultScreen")
+render()
 }
 
-// 円描画
 function draw(){
 
-const c=document.getElementById("canvas");
-const ctx=c.getContext("2d");
+const c=document.getElementById("canvas")
+const ctx=c.getContext("2d")
 
-ctx.clearRect(0,0,400,400);
+ctx.clearRect(0,0,400,400)
 
-const cx=200;
-const cy=200;
-const r=150;
+let cx=200
+let cy=200
+let r=150
 
 for(let i=0;i<64;i++){
 
-let angle=(Math.PI*2/64)*i;
-let v=stats[i];
+let a=(Math.PI*2/64)*i
+let v=stats[i]/10
 
-let x=cx+Math.cos(angle)*r*(v/6);
-let y=cy+Math.sin(angle)*r*(v/6);
+let x=cx+Math.cos(a)*r*v
+let y=cy+Math.sin(a)*r*v
 
-ctx.beginPath();
-ctx.arc(x,y,3,0,Math.PI*2);
-ctx.fillStyle="rgba(120,180,255,0.9)";
-ctx.fill();
+ctx.beginPath()
+ctx.arc(x,y,3,0,Math.PI*2)
+ctx.fillStyle="#6bd4ff"
+ctx.fill()
 }
 
-ctx.beginPath();
-ctx.arc(cx,cy,r,0,Math.PI*2);
-ctx.strokeStyle="#2a3355";
-ctx.stroke();
+ctx.beginPath()
+ctx.arc(cx,cy,r,0,Math.PI*2)
+ctx.strokeStyle="#333"
+ctx.stroke()
 }
 
-// 詳細レポート
 function getReport(){
 
-let total=0;
-let max=0;
-let idx=0;
+let domain=Array(8).fill(0)
 
 for(let i=0;i<64;i++){
-total+=stats[i];
-if(stats[i]>max){
-max=stats[i];
-idx=i;
-}
+domain[i%8]+=stats[i]
 }
 
-let avg=total/64;
-
-// 8領域
-let domainScore=Array(8).fill(0);
-for(let i=0;i<64;i++){
-domainScore[i%8]+=stats[i];
-}
-
-// 最大
-let domIdx=0;
-let domMax=0;
+let max=0
+let dom=0
 
 for(let i=0;i<8;i++){
-if(domainScore[i]>domMax){
-domMax=domainScore[i];
-domIdx=i;
+if(domain[i]>max){
+max=domain[i]
+dom=i
 }
 }
 
-// 最小
-let weakIdx=0;
-let weakVal=999;
+let min=999
+let weak=0
 
 for(let i=0;i<8;i++){
-if(domainScore[i]<weakVal){
-weakVal=domainScore[i];
-weakIdx=i;
+if(domain[i]<min){
+min=domain[i]
+weak=i
 }
 }
 
-// 今日
-let todayIdx=(new Date().getDate())%8;
+let today=new Date().getDate()%8
 
-// 変動
-let variance=0;
-for(let i=0;i<64;i++){
-variance+=Math.abs(stats[i]-avg);
-}
-variance/=64;
+const name=[
+"自己認識",
+"関係性",
+"行動",
+"適応",
+"思考",
+"感情",
+"時間",
+"直感"
+]
 
-let trend="";
-if(variance>1.8) trend="外的影響を強く受ける変動期";
-else if(variance>1.2) trend="内部調整中の移行期";
-else trend="安定構造状態";
+return `
+コア領域
+${name[dom]}
 
-// 名称
-const domainName=[
-"自己認識領域",
-"関係性領域",
-"行動領域",
-"環境適応領域",
-"思考構造領域",
-"感情処理領域",
-"習慣時間領域",
-"直感統合領域"
-];
+思考傾向
+${name[dom]}優位の判断
 
-const thinking=[
-"自己分析思考が強まる",
-"他者基準思考になる",
-"行動優先思考",
-"状況適応思考",
-"論理分析思考",
-"感情判断思考",
-"継続安定思考",
-"直感優先思考"
-];
+行動傾向
+${name[dom]}中心行動
 
-const action=[
-"内面観察型行動",
-"対人中心行動",
-"即行動型",
-"調整行動型",
-"計画型行動",
-"感情反応型",
-"ルーティン行動型",
-"直感行動型"
-];
+今日の影響
+${name[today]}
 
-return ""
-+"■ スターコード64 詳細解析\n\n"
+注意領域
+${name[weak]}
 
-+"【コア構造】\n"
-+domainName[domIdx]+"\n\n"
-
-+"【思考傾向】\n"
-+thinking[domIdx]+"\n\n"
-
-+"【行動傾向】\n"
-+action[domIdx]+"\n\n"
-
-+"【今日の影響領域】\n"
-+domainName[todayIdx]+"\n\n"
-
-+"【注意領域】\n"
-+domainName[weakIdx]+"\n\n"
-
-+"【変化傾向】\n"
-+trend+"\n\n"
-
-+"【総合分析】\n"
-+"現在は"+domainName[domIdx]+"優位の構造です。\n"
-+"一方で"+domainName[weakIdx]+"が弱く補完が必要です。\n"
-+"本日は"+domainName[todayIdx]+"の影響が加わります。";
+総合
+${name[dom]}優位構造
+`
 }
 
 function render(){
-document.getElementById("resultText").innerText=getReport();
-draw();
+document.getElementById("resultText").innerText=getReport()
+draw()
 }
 
 </script>
