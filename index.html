@@ -12,22 +12,23 @@ body {
   text-align:center;
 }
 
+/* ★ここが修正ポイント（円を大きく） */
 .circle {
-  width: 300px;
-  height: 300px;
+  width: 500px;
+  height: 500px;
   border: 2px solid #2a3a55;
   border-radius: 50%;
-  margin: 40px auto;
+  margin: 60px auto;
   position: relative;
-  animation: rotate 20s linear infinite;
+  animation: rotate 30s linear infinite;
 }
 
-/* 12分割の目印 */
+/* 64分割ライン */
 .segment {
   position: absolute;
   width: 2px;
-  height: 150px;
-  background: rgba(255,255,255,0.08);
+  height: 250px;
+  background: rgba(255,255,255,0.04);
   top: 0;
   left: 50%;
   transform-origin: bottom;
@@ -42,14 +43,14 @@ body {
   top: 50%;
   left: 50%;
   transform-origin: center;
-  transition: all 1.5s ease-in-out;
-  box-shadow: 0 0 10px #00e5ff;
-  animation: blink 2s infinite;
+  transition: all 1.8s ease-in-out;
+  box-shadow: 0 0 12px #00e5ff;
+  animation: blink 2.5s infinite;
 }
 
 @keyframes blink {
   0%,100% { opacity: 1; }
-  50% { opacity: 0.3; }
+  50% { opacity: 0.25; }
 }
 
 @keyframes rotate {
@@ -66,6 +67,7 @@ button {
 #codeDisplay {
   font-size: 24px;
   margin-top: 20px;
+  color:#7df9ff;
 }
 </style>
 </head>
@@ -78,27 +80,31 @@ button {
   <div class="dot" id="dot"></div>
 </div>
 
-<input id="inputCode" placeholder="コードを入力（1〜12）">
+<input id="inputCode" placeholder="コードを入力（1〜64）">
 <br>
 <button onclick="runCode()">実行</button>
 
 <div id="codeDisplay">コード：--</div>
 
 <script>
-// 12分割ライン生成
+
+const TOTAL = 64;
+
+// 円生成
 const circle = document.getElementById("circle");
-for(let i=0;i<12;i++){
+
+for(let i=0;i<TOTAL;i++){
   const line = document.createElement("div");
   line.className = "segment";
-  line.style.transform = `rotate(${i*30}deg)`;
+  line.style.transform = `rotate(${i * (360 / TOTAL)}deg)`;
   circle.appendChild(line);
 }
 
 function runCode(){
   let code = parseInt(document.getElementById("inputCode").value);
 
-  if(isNaN(code) || code < 1 || code > 12){
-    alert("1〜12を入力してください");
+  if(isNaN(code) || code < 1 || code > 64){
+    alert("1〜64を入力してください");
     return;
   }
 
@@ -107,12 +113,12 @@ function runCode(){
   moveDot(code);
 }
 
-// 円周配置計算
+// ★ここも修正（半径を拡大）
 function moveDot(code){
   const dot = document.getElementById("dot");
 
-  const angle = (code - 1) * 30; // 12分割
-  const radius = 120;
+  const angle = (code - 1) * (360 / TOTAL);
+  const radius = 200;
 
   const rad = angle * Math.PI / 180;
 
@@ -121,6 +127,7 @@ function moveDot(code){
 
   dot.style.transform = `translate(${x}px, ${y}px)`;
 }
+
 </script>
 
 </body>
