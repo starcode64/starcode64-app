@@ -7,41 +7,33 @@
 <style>
 body{
   font-family: sans-serif;
-  margin: 0;
-  padding: 0;
-}
-
-/* ■ 画面共通 */
-.screen{
-  display: none;
   padding: 20px;
 }
 
-.active{
-  display: block;
+/* ■ 画面管理 */
+.screen{
+  display:none;
 }
 
-/* ■ スタート画面 */
-#startScreen{
-  text-align: center;
-  margin-top: 80px;
+.active{
+  display:block;
 }
 
 /* ■ 入力 */
 input{
-  display: block;
-  margin: 10px auto;
-  padding: 8px;
-  width: 220px;
+  display:block;
+  margin:10px 0;
+  padding:8px;
+  width:220px;
 }
 
 /* ■ ボタン */
 button{
-  padding: 10px 16px;
-  margin-top: 10px;
+  padding:10px 14px;
+  margin-top:10px;
 }
 
-/* ■ 結果 */
+/* ■ 結果テキスト */
 #resultText{
   white-space: pre-line;
   margin-top: 20px;
@@ -49,11 +41,11 @@ button{
   border: 1px solid #ccc;
 }
 
-/* ■ canvas */
+/* ■ 円グラフ */
 canvas{
-  display: block;
-  margin: 20px auto;
-  border: 1px solid #ddd;
+  margin-top:20px;
+  border:1px solid #ddd;
+  display:block;
 }
 </style>
 </head>
@@ -64,22 +56,22 @@ canvas{
 <div id="startScreen" class="screen active">
 
   <h1>スターコード64</h1>
-  <p>あなたの構造を解析します</p>
+  <p>あなたの構造を解析するシステム</p>
 
-  <button onclick="goInput()">開始</button>
+  <button onclick="goInput()">開始する</button>
 
 </div>
 
 <!-- ■ 入力画面 -->
 <div id="inputScreen" class="screen">
 
-  <h2>入力情報</h2>
+  <h2>入力</h2>
 
   <input id="birthDate" placeholder="生年月日（例：1990-01-01）">
   <input id="birthTime" placeholder="出生時刻（例：12:30）">
   <input id="birthPlace" placeholder="出生地（例：Tokyo）">
 
-  <button onclick="startAnalysis()">診断する</button>
+  <button onclick="run()">診断実行</button>
 
 </div>
 
@@ -92,7 +84,7 @@ canvas{
 
   <canvas id="canvas" width="400" height="400"></canvas>
 
-  <button onclick="backInput()">戻る</button>
+  <button onclick="back()">戻る</button>
 
 </div>
 
@@ -103,27 +95,25 @@ let stats = Array(64).fill(0);
 // ----------------------
 // ■ 画面切替
 // ----------------------
-function showScreen(id){
+function show(id){
 
-  document.querySelectorAll(".screen").forEach(s=>{
-    s.classList.remove("active");
-  });
+  document.querySelectorAll(".screen")
+    .forEach(e => e.classList.remove("active"));
 
   document.getElementById(id).classList.add("active");
 }
 
+// ----------------------
+// ■ スタート → 入力
+// ----------------------
 function goInput(){
-  showScreen("inputScreen");
-}
-
-function backInput(){
-  showScreen("inputScreen");
+  show("inputScreen");
 }
 
 // ----------------------
-// ■ 初期化＆診断開始
+// ■ 入力 → 診断
 // ----------------------
-function startAnalysis(){
+function run(){
 
   let place = document.getElementById("birthPlace").value;
 
@@ -138,13 +128,20 @@ function startAnalysis(){
     stats[i] = Math.random()*3 + bias;
   }
 
-  showScreen("resultScreen");
+  show("resultScreen");
 
   render();
 }
 
 // ----------------------
-// ■ 64意味
+// ■ 戻る
+// ----------------------
+function back(){
+  show("inputScreen");
+}
+
+// ----------------------
+// ■ 意味定義
 // ----------------------
 function getMeaning(i){
 
@@ -163,12 +160,12 @@ function getMeaning(i){
 }
 
 // ----------------------
-// ■ 円マップ描画
+// ■ 円マップ
 // ----------------------
 function draw(){
 
-  const canvas = document.getElementById("canvas");
-  const ctx = canvas.getContext("2d");
+  const c = document.getElementById("canvas");
+  const ctx = c.getContext("2d");
 
   ctx.clearRect(0,0,400,400);
 
@@ -197,11 +194,9 @@ function draw(){
 }
 
 // ----------------------
-// ■ 分析テキスト
+// ■ レポート
 // ----------------------
 function getReport(){
-
-  let sum = stats.reduce((a,b)=>a+b,0)/64;
 
   let max = 0;
   let idx = 0;
@@ -214,15 +209,15 @@ function getReport(){
   }
 
   return ""
-  + "■ 平均構造値：" + sum.toFixed(2) + "\n\n"
-  + "■ 最も強い領域：" + getMeaning(idx+1) + "\n\n"
-  + "■ 解釈：\n"
-  + "現在のあなたは「" + getMeaning(idx+1) + "」の性質が強く出ています。\n"
-  + "この領域を活かすことで、流れが安定します。";
+  + "■ 主要傾向：\n"
+  + getMeaning(idx+1) + "\n\n"
+  + "■ 解説：\n"
+  + "この領域の性質が現在強く働いています。\n"
+  + "意識的に活用することで安定します。";
 }
 
 // ----------------------
-// ■ 画面描画
+// ■ 描画
 // ----------------------
 function render(){
 
