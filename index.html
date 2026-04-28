@@ -2,125 +2,246 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>スターコード64</title>
+<title>STARCODE64</title>
 
 <style>
-body {
-  background:#0b0f1a;
-  color:#fff;
-  font-family: sans-serif;
-  text-align:center;
+body{
+margin:0;
+font-family:sans-serif;
+background:linear-gradient(180deg,#020617,#0b0f2a);
+color:white;
+display:flex;
+justify-content:center;
+align-items:center;
+height:100vh;
 }
 
-.circle {
-  width: 300px;
-  height: 300px;
-  border: 2px solid #2a3a55;
-  border-radius: 50%;
-  margin: 40px auto;
-  position: relative;
-  animation: rotate 20s linear infinite;
+.card{
+width:360px;
+background:#1e293b;
+border-radius:20px;
+padding:30px;
+box-shadow:0 20px 40px rgba(0,0,0,0.5);
+text-align:center;
 }
 
-/* 12分割の目印 */
-.segment {
-  position: absolute;
-  width: 2px;
-  height: 150px;
-  background: rgba(255,255,255,0.08);
-  top: 0;
-  left: 50%;
-  transform-origin: bottom;
+.screen{display:none;}
+.active{display:block;}
+
+h1{
+margin:0 0 20px 0;
+font-size:28px;
 }
 
-.dot {
-  width: 14px;
-  height: 14px;
-  background: #00e5ff;
-  border-radius: 50%;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform-origin: center;
-  transition: all 1.5s ease-in-out;
-  box-shadow: 0 0 10px #00e5ff;
-  animation: blink 2s infinite;
+button{
+background:linear-gradient(90deg,#6366f1,#8b5cf6);
+border:none;
+padding:12px 26px;
+border-radius:10px;
+color:white;
+font-size:16px;
+cursor:pointer;
+margin-top:15px;
 }
 
-@keyframes blink {
-  0%,100% { opacity: 1; }
-  50% { opacity: 0.3; }
+input{
+width:100%;
+padding:10px;
+margin-top:10px;
+border-radius:8px;
+border:none;
+background:#0f172a;
+color:white;
 }
 
-@keyframes rotate {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+canvas{
+margin-top:20px;
 }
 
-button {
-  padding:10px 20px;
-  font-size:16px;
-  margin-top:20px;
-}
-
-#codeDisplay {
-  font-size: 24px;
-  margin-top: 20px;
+.resultText{
+margin-top:15px;
+white-space:pre-line;
+line-height:1.5;
 }
 </style>
 </head>
 
 <body>
 
-<h2>スターコード64</h2>
+<div class="card">
 
-<div class="circle" id="circle">
-  <div class="dot" id="dot"></div>
+<!-- スタート画面 -->
+<div id="start" class="screen active">
+<h1>STARCODE64</h1>
+<button onclick="goInput()">START</button>
 </div>
 
-<input id="inputCode" placeholder="コードを入力（1〜12）">
-<br>
-<button onclick="runCode()">実行</button>
+<!-- 入力画面 -->
+<div id="input" class="screen">
 
-<div id="codeDisplay">コード：--</div>
+<h1>入力</h1>
+
+<input id="today" type="date">
+
+<input id="birth" placeholder="生年月日 1990-01-01">
+
+<input id="time" placeholder="出生時間 12:30">
+
+<input id="place" placeholder="出生地 Tokyo">
+
+<button onclick="run()">診断</button>
+
+</div>
+
+<!-- 結果画面 -->
+<div id="result" class="screen">
+
+<h1 id="code"></h1>
+
+<canvas id="canvas" width="280" height="280"></canvas>
+
+<div class="resultText" id="text"></div>
+
+<button onclick="back()">戻る</button>
+
+</div>
+
+</div>
 
 <script>
-// 12分割ライン生成
-const circle = document.getElementById("circle");
-for(let i=0;i<12;i++){
-  const line = document.createElement("div");
-  line.className = "segment";
-  line.style.transform = `rotate(${i*30}deg)`;
-  circle.appendChild(line);
+
+let starCode=0;
+
+function show(id){
+document.querySelectorAll(".screen")
+.forEach(e=>e.classList.remove("active"))
+
+document.getElementById(id).classList.add("active")
 }
 
-function runCode(){
-  let code = parseInt(document.getElementById("inputCode").value);
+function goInput(){
 
-  if(isNaN(code) || code < 1 || code > 12){
-    alert("1〜12を入力してください");
-    return;
-  }
+// 今日の日付自動
+let today=new Date().toISOString().substr(0,10);
+document.getElementById("today").value=today;
 
-  document.getElementById("codeDisplay").innerText = "コード：" + code;
-
-  moveDot(code);
+show("input")
 }
 
-// 円周配置計算
-function moveDot(code){
-  const dot = document.getElementById("dot");
-
-  const angle = (code - 1) * 30; // 12分割
-  const radius = 120;
-
-  const rad = angle * Math.PI / 180;
-
-  const x = Math.cos(rad) * radius;
-  const y = Math.sin(rad) * radius;
-
-  dot.style.transform = `translate(${x}px, ${y}px)`;
+function back(){
+show("start")
 }
+
+function run(){
+
+let t=document.getElementById("today").value
+let b=document.getElementById("birth").value
+let ti=document.getElementById("time").value
+let p=document.getElementById("place").value
+
+let seed=(t+b+ti+p)
+.split("")
+.reduce((a,b)=>a+b.charCodeAt(0),0)
+
+starCode=(seed%64)+1
+
+show("result")
+
+render()
+}
+
+function render(){
+
+document.getElementById("code")
+.innerText="あなたのコード : "+starCode
+
+draw()
+
+document.getElementById("text")
+.innerText=getMeaning(starCode)
+}
+
+function draw(){
+
+const c=document.getElementById("canvas")
+const ctx=c.getContext("2d")
+
+ctx.clearRect(0,0,280,280)
+
+let cx=140
+let cy=140
+let r=110
+
+// 円
+let g=ctx.createRadialGradient(cx,cy,10,cx,cy,r)
+
+g.addColorStop(0,"#0f172a")
+g.addColorStop(1,"#020617")
+
+ctx.beginPath()
+ctx.arc(cx,cy,r,0,Math.PI*2)
+ctx.fillStyle=g
+ctx.fill()
+
+// 光
+ctx.beginPath()
+ctx.arc(cx,cy,r,0,Math.PI*2)
+ctx.strokeStyle="rgba(139,92,246,0.4)"
+ctx.lineWidth=10
+ctx.stroke()
+
+// 点
+let angle=(Math.PI*2/64)*(starCode-1)
+
+let dotR=20
+
+let x=cx+Math.cos(angle)*dotR
+let y=cy+Math.sin(angle)*dotR
+
+let glow=ctx.createRadialGradient(x,y,0,x,y,15)
+glow.addColorStop(0,"#fff")
+glow.addColorStop(1,"rgba(255,255,200,0)")
+
+ctx.beginPath()
+ctx.arc(x,y,12,0,Math.PI*2)
+ctx.fillStyle=glow
+ctx.fill()
+
+ctx.beginPath()
+ctx.arc(x,y,5,0,Math.PI*2)
+ctx.fillStyle="#fff176"
+ctx.fill()
+}
+
+// コード意味
+function getMeaning(n){
+
+const text=[
+
+"始まりの意識。新しい流れを作る力。",
+"直感優位の判断。内面感覚が鍵。",
+"創造と表現。個性の発揮。",
+"安定と構築。基盤を作る。",
+"変化と自由。移動のエネルギー。",
+"調和と関係性。人との繋がり。",
+"探求と内省。深い理解。",
+"拡張と成功。外への展開。",
+
+"バランス調整の意識。",
+"転換期のエネルギー。",
+"意識の再構築。",
+"感覚の目覚め。",
+"変容の入り口。",
+"統合の流れ。",
+"次元移行の兆し。",
+"循環の完成。"
+
+]
+
+return text[(n-1)%text.length]
+
+}
+
 </script>
 
 </body>
