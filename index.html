@@ -5,206 +5,122 @@
 <title>スターコード64</title>
 
 <style>
-body{
-margin:0;
-font-family:sans-serif;
-background:#05070f;
-color:white;
+body {
+  background:#0b0f1a;
+  color:#fff;
+  font-family: sans-serif;
+  text-align:center;
 }
 
-.screen{
-display:none;
-min-height:100vh;
-padding:40px;
+.circle {
+  width: 300px;
+  height: 300px;
+  border: 2px solid #2a3a55;
+  border-radius: 50%;
+  margin: 40px auto;
+  position: relative;
+  animation: rotate 20s linear infinite;
 }
 
-.active{display:block;}
-
-input{
-display:block;
-margin:10px 0;
-padding:12px;
-width:260px;
-background:#151a2f;
-border:1px solid #2a3355;
-color:white;
-border-radius:6px;
+/* 12分割の目印 */
+.segment {
+  position: absolute;
+  width: 2px;
+  height: 150px;
+  background: rgba(255,255,255,0.08);
+  top: 0;
+  left: 50%;
+  transform-origin: bottom;
 }
 
-button{
-padding:12px 18px;
-background:#4a7dff;
-border:none;
-color:white;
-border-radius:6px;
+.dot {
+  width: 14px;
+  height: 14px;
+  background: #00e5ff;
+  border-radius: 50%;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform-origin: center;
+  transition: all 1.5s ease-in-out;
+  box-shadow: 0 0 10px #00e5ff;
+  animation: blink 2s infinite;
 }
 
-#resultText{
-white-space:pre-line;
-margin-top:20px;
-padding:15px;
-background:#11182c;
-border-radius:8px;
+@keyframes blink {
+  0%,100% { opacity: 1; }
+  50% { opacity: 0.3; }
 }
 
-canvas{
-margin-top:20px;
-background:#02030a;
-border-radius:50%;
+@keyframes rotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+button {
+  padding:10px 20px;
+  font-size:16px;
+  margin-top:20px;
+}
+
+#codeDisplay {
+  font-size: 24px;
+  margin-top: 20px;
 }
 </style>
 </head>
 
 <body>
 
-<div id="startScreen" class="screen active">
-<h1>STAR CODE 64</h1>
-<button onclick="show('inputScreen')">START</button>
+<h2>スターコード64</h2>
+
+<div class="circle" id="circle">
+  <div class="dot" id="dot"></div>
 </div>
 
-<div id="inputScreen" class="screen">
-<h2>入力</h2>
-
-<input id="birthDate" placeholder="生年月日 1990-01-01">
-<input id="birthTime" placeholder="出生時刻 12:30">
-<input id="birthPlace" placeholder="出生地">
-
-<button onclick="run()">診断</button>
-</div>
-
-<div id="resultScreen" class="screen">
-<h2>診断結果</h2>
-<div id="resultText"></div>
-<canvas id="canvas" width="400" height="400"></canvas>
+<input id="inputCode" placeholder="コードを入力（1〜12）">
 <br>
-<button onclick="show('inputScreen')">戻る</button>
-</div>
+<button onclick="runCode()">実行</button>
+
+<div id="codeDisplay">コード：--</div>
 
 <script>
-
-let stats=[];
-
-function show(id){
-document.querySelectorAll(".screen").forEach(e=>e.classList.remove("active"))
-document.getElementById(id).classList.add("active")
+// 12分割ライン生成
+const circle = document.getElementById("circle");
+for(let i=0;i<12;i++){
+  const line = document.createElement("div");
+  line.className = "segment";
+  line.style.transform = `rotate(${i*30}deg)`;
+  circle.appendChild(line);
 }
 
-function run(){
+function runCode(){
+  let code = parseInt(document.getElementById("inputCode").value);
 
-let d=document.getElementById("birthDate").value
-let t=document.getElementById("birthTime").value
-let p=document.getElementById("birthPlace").value
+  if(isNaN(code) || code < 1 || code > 12){
+    alert("1〜12を入力してください");
+    return;
+  }
 
-let seed=(d+t+p).split("").reduce((a,b)=>a+b.charCodeAt(0),0)
+  document.getElementById("codeDisplay").innerText = "コード：" + code;
 
-stats=[]
-
-for(let i=0;i<64;i++){
-let v=(Math.sin(seed+i)+1)/2
-stats.push(v)
+  moveDot(code);
 }
 
-show("resultScreen")
-render()
+// 円周配置計算
+function moveDot(code){
+  const dot = document.getElementById("dot");
+
+  const angle = (code - 1) * 30; // 12分割
+  const radius = 120;
+
+  const rad = angle * Math.PI / 180;
+
+  const x = Math.cos(rad) * radius;
+  const y = Math.sin(rad) * radius;
+
+  dot.style.transform = `translate(${x}px, ${y}px)`;
 }
-
-function draw(){
-
-const c=document.getElementById("canvas")
-const ctx=c.getContext("2d")
-
-ctx.clearRect(0,0,400,400)
-
-let cx=200
-let cy=200
-let r=150
-
-for(let i=0;i<64;i++){
-
-let a=(Math.PI*2/64)*i
-
-let x=cx+Math.cos(a)*r*stats[i]
-let y=cy+Math.sin(a)*r*stats[i]
-
-ctx.beginPath()
-ctx.arc(x,y,3,0,Math.PI*2)
-ctx.fillStyle="#6bd4ff"
-ctx.fill()
-}
-
-ctx.beginPath()
-ctx.arc(cx,cy,r,0,Math.PI*2)
-ctx.strokeStyle="#333"
-ctx.stroke()
-}
-
-function getReport(){
-
-let domain=Array(8).fill(0)
-
-for(let i=0;i<64;i++){
-domain[i%8]+=stats[i]
-}
-
-let max=0
-let dom=0
-
-for(let i=0;i<8;i++){
-if(domain[i]>max){
-max=domain[i]
-dom=i
-}
-}
-
-let min=999
-let weak=0
-
-for(let i=0;i<8;i++){
-if(domain[i]<min){
-min=domain[i]
-weak=i
-}
-}
-
-let today=new Date().getDate()%8
-
-const name=[
-"自己認識",
-"関係性",
-"行動",
-"適応",
-"思考",
-"感情",
-"時間",
-"直感"
-]
-
-return `
-■ コア領域
-${name[dom]}
-
-■ 思考傾向
-${name[dom]}中心思考
-
-■ 行動傾向
-${name[dom]}優位行動
-
-■ 今日の影響
-${name[today]}
-
-■ 注意領域
-${name[weak]}
-
-■ 総合
-${name[dom]}優位構造
-`
-}
-
-function render(){
-document.getElementById("resultText").innerText=getReport()
-draw()
-}
-
 </script>
 
 </body>
