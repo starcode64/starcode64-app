@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>スターコード64 - D段階</title>
+<title>スターコード64 - K段階（完成）</title>
 
 <style>
 body {
@@ -12,7 +12,6 @@ body {
   text-align:center;
 }
 
-/* 外円 */
 .outerCircle {
   width: 520px;
   height: 520px;
@@ -23,7 +22,6 @@ body {
   animation: rotate 40s linear infinite;
 }
 
-/* 内円 */
 .innerCircle {
   width: 340px;
   height: 340px;
@@ -36,7 +34,6 @@ body {
   animation: rotateReverse 25s linear infinite;
 }
 
-/* 分割線 */
 .segment {
   position: absolute;
   width: 2px;
@@ -47,35 +44,39 @@ body {
   transform-origin: bottom;
 }
 
-/* 外光点 */
-.dotOuter {
-  width: 16px;
-  height: 16px;
+.dotOuter, .dotInner {
   border-radius: 50%;
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  box-shadow: 0 0 18px;
-  animation: blink 2.5s infinite;
+  transition: all 0.6s ease;
+  box-shadow: 0 0 16px;
 }
 
-/* 内光点 */
-.dotInner {
-  width: 12px;
-  height: 12px;
+.observer {
+  width: 10px;
+  height: 10px;
+  background: #ffffff;
   border-radius: 50%;
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  box-shadow: 0 0 14px;
-  animation: blink 3s infinite;
+  box-shadow: 0 0 10px #ffffff;
 }
 
-@keyframes blink {
-  0%,100% { opacity: 1; }
-  50% { opacity: 0.3; }
+#codeDisplay, #stateDisplay, #autoDisplay {
+  font-size: 14px;
+  margin-top: 10px;
+  white-space: pre-line;
+  color:#7df9ff;
+}
+
+button {
+  padding:10px 20px;
+  font-size:16px;
+  margin-top:20px;
 }
 
 @keyframes rotate {
@@ -88,39 +89,33 @@ body {
   100% { transform: translate(-50%,-50%) rotate(-360deg); }
 }
 
-button {
-  padding:10px 20px;
-  font-size:16px;
-  margin-top:20px;
-}
-
-#codeDisplay {
-  font-size: 20px;
-  margin-top: 20px;
-  color:#7df9ff;
-  line-height: 1.6;
-  white-space: pre-line;
-}
 </style>
 </head>
 
 <body>
 
-<h2>スターコード64 - D段階</h2>
+<h2>スターコード64 - K段階（自己生成完成モデル）</h2>
 
 <div class="outerCircle" id="outerCircle">
-  <div class="dotOuter" id="dotOuter"></div>
 
-  <div class="innerCircle" id="innerCircle">
+  <div class="observer"></div>
+
+  <div class="innerCircle">
     <div class="dotInner" id="dotInner"></div>
   </div>
+
+  <div class="dotOuter" id="dotOuter"></div>
+
 </div>
 
-<input id="inputCode" placeholder="コードを入力（1〜64）">
+<input id="inputCode" placeholder="コード（1〜64）">
 <br>
-<button onclick="runCode()">実行</button>
+<button onclick="runCode()">手動実行</button>
+<button onclick="toggleAuto()">自動モード</button>
 
 <div id="codeDisplay">コード：--</div>
+<div id="stateDisplay">状態：--</div>
+<div id="autoDisplay">自動：OFF</div>
 
 <script>
 
@@ -128,7 +123,13 @@ const TOTAL = 64;
 const radiusOuter = 210;
 const radiusInner = 120;
 
-// 外円ライン
+const stats = Array(64).fill(0);
+const history = [];
+
+let autoMode = false;
+let autoInterval = null;
+
+// 円
 const outerCircle = document.getElementById("outerCircle");
 
 for(let i=0;i<TOTAL;i++){
@@ -138,73 +139,116 @@ for(let i=0;i<TOTAL;i++){
   outerCircle.appendChild(line);
 }
 
-// 意味マップ
-const meanings = [
-"起動","分岐","拡張","固定","変化","調整","統合前","完成"
-];
+// 移動
+function move(code){
 
-// 層カラー生成（重要）
-function getColor(code, type){
-  const layer = Math.floor((code - 1) / 8);
-
-  // 内＝暖色系グラデ
-  if(type === "inner"){
-    const r = 255;
-    const g = 120 + layer * 10;
-    const b = 60;
-    return `rgb(${r},${g},${b})`;
-  }
-
-  // 外＝寒色系グラデ
-  const r = 40;
-  const g = 140 + layer * 8;
-  const b = 255;
-  return `rgb(${r},${g},${b})`;
-}
-
-function getMeaning(code){
-  const base = (code - 1) % 8;
-  const layer = Math.floor((code - 1) / 8) + 1;
-  return `層${layer}：${meanings[base]}`;
-}
-
-function runCode(){
-  let code = parseInt(document.getElementById("inputCode").value);
-
-  if(isNaN(code) || code < 1 || code > 64){
-    alert("1〜64を入力してください");
-    return;
-  }
-
-  moveDots(code);
-
-  document.getElementById("codeDisplay").innerText =
-    "コード：" + code + "\n" + getMeaning(code);
-}
-
-function moveDots(code){
   const angle = (code - 1) * (360 / TOTAL);
   const rad = angle * Math.PI / 180;
 
-  // 外円
-  const xOuter = Math.cos(rad) * radiusOuter;
-  const yOuter = Math.sin(rad) * radiusOuter;
+  const x = Math.cos(rad) * radiusOuter;
+  const y = Math.sin(rad) * radiusOuter;
 
-  const outer = document.getElementById("dotOuter");
-  outer.style.transform =
-    `translate(-50%, -50%) translate(${xOuter}px, ${yOuter}px)`;
-  outer.style.background = getColor(code, "outer");
-  outer.style.boxShadow = `0 0 18px ${getColor(code, "outer")}`;
+  document.getElementById("dotOuter").style.transform =
+    `translate(-50%, -50%) translate(${x}px, ${y}px)`;
+}
 
-  // 内円
-  const xInner = Math.cos(rad) * radiusInner;
-  const yInner = Math.sin(rad) * radiusInner;
+// 内円
+function moveInner(code){
 
-  const inner = document.getElementById("dotInner");
-  inner.style.transform =
-    `translate(-50%, -50%) translate(${xInner}px, ${yInner}px)`;
-  inner.style.background = getColor(code, "inner");
-  inner.style.boxShadow = `0 0 14px ${getColor(code, "inner")}`;
+  const angle = (code - 1) * (360 / TOTAL);
+  const rad = angle * Math.PI / 180;
+
+  const x = Math.cos(rad) * radiusInner;
+  const y = Math.sin(rad) * radiusInner;
+
+  document.getElementById("dotInner").style.transform =
+    `translate(-50%, -50%) translate(${x}px, ${y}px)`;
+}
+
+// 状態分析
+function analyzeState(){
+
+  let total = 0;
+  let max = 0;
+
+  for(let i=0;i<64;i++){
+    total += stats[i];
+    if(stats[i] > max) max = stats[i];
+  }
+
+  const ratio = max / (total || 1);
+
+  if(total < 5) return "未収束";
+  if(ratio > 0.6) return "集中";
+  if(ratio > 0.3) return "安定";
+  return "拡散";
+}
+
+// 予測（最頻）
+function predict(){
+
+  let max = 0;
+  let idx = 0;
+
+  for(let i=0;i<64;i++){
+    if(stats[i] > max){
+      max = stats[i];
+      idx = i;
+    }
+  }
+
+  return idx + 1;
+}
+
+// 実行
+function runCode(codeInput){
+
+  let code;
+
+  if(typeof codeInput === "number"){
+    code = codeInput;
+  } else {
+    code = parseInt(document.getElementById("inputCode").value);
+  }
+
+  if(isNaN(code) || code < 1 || code > 64){
+    return;
+  }
+
+  history.push(code);
+  stats[code - 1]++;
+
+  move(code);
+  moveInner(code);
+
+  document.getElementById("codeDisplay").innerText =
+    "コード：" + code +
+    "\n履歴：" + history.slice(-10).join(" → ");
+
+  document.getElementById("stateDisplay").innerText =
+    "状態：" + analyzeState() +
+    "\n予測：" + predict();
+}
+
+// 自動生成
+function autoStep(){
+  const next = predict();
+  runCode(next);
+}
+
+// 自動切替
+function toggleAuto(){
+
+  autoMode = !autoMode;
+
+  document.getElementById("autoDisplay").innerText =
+    "自動：" + (autoMode ? "ON" : "OFF");
+
+  if(autoMode){
+    autoInterval = setInterval(autoStep, 2000);
+  } else {
+    clearInterval(autoInterval);
+  }
 }
 
 </script>
