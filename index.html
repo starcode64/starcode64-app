@@ -12,7 +12,6 @@ body {
   text-align:center;
 }
 
-/* ★ここが修正ポイント（円を大きく） */
 .circle {
   width: 500px;
   height: 500px;
@@ -23,28 +22,31 @@ body {
   animation: rotate 30s linear infinite;
 }
 
-/* 64分割ライン */
+/* ★線を見やすく */
 .segment {
   position: absolute;
   width: 2px;
   height: 250px;
-  background: rgba(255,255,255,0.04);
+  background: rgba(255,255,255,0.06);
   top: 0;
   left: 50%;
   transform-origin: bottom;
 }
 
+/* ★ここが重要修正 */
 .dot {
-  width: 14px;
-  height: 14px;
+  width: 18px;
+  height: 18px;
   background: #00e5ff;
   border-radius: 50%;
   position: absolute;
-  top: 50%;
+
+  /* 中心固定をやめる */
   left: 50%;
-  transform-origin: center;
-  transition: all 1.8s ease-in-out;
-  box-shadow: 0 0 12px #00e5ff;
+  top: 50%;
+
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 18px #00e5ff;
   animation: blink 2.5s infinite;
 }
 
@@ -89,8 +91,9 @@ button {
 <script>
 
 const TOTAL = 64;
+const radius = 200;
 
-// 円生成
+// 線生成
 const circle = document.getElementById("circle");
 
 for(let i=0;i<TOTAL;i++){
@@ -113,19 +116,20 @@ function runCode(){
   moveDot(code);
 }
 
-// ★ここも修正（半径を拡大）
 function moveDot(code){
   const dot = document.getElementById("dot");
 
   const angle = (code - 1) * (360 / TOTAL);
-  const radius = 200;
-
   const rad = angle * Math.PI / 180;
 
   const x = Math.cos(rad) * radius;
   const y = Math.sin(rad) * radius;
 
-  dot.style.transform = `translate(${x}px, ${y}px)`;
+  // ★ここが改善ポイント（中心基準＋オフセット合成）
+  dot.style.transform = `
+    translate(-50%, -50%)
+    translate(${x}px, ${y}px)
+  `;
 }
 
 </script>
