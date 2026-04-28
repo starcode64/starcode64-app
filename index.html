@@ -49,6 +49,8 @@ border-radius:8px;
 
 canvas{
 margin-top:20px;
+background:#02030a;
+border-radius:50%;
 }
 </style>
 </head>
@@ -98,7 +100,7 @@ let seed=(d+t+p).split("").reduce((a,b)=>a+b.charCodeAt(0),0)
 stats=[]
 
 for(let i=0;i<64;i++){
-let v=Math.abs(Math.sin(seed*(i+1))*10)
+let v=(Math.sin(seed+i)+1)/2
 stats.push(v)
 }
 
@@ -120,10 +122,9 @@ let r=150
 for(let i=0;i<64;i++){
 
 let a=(Math.PI*2/64)*i
-let v=stats[i]/10
 
-let x=cx+Math.cos(a)*r*v
-let y=cy+Math.sin(a)*r*v
+let x=cx+Math.cos(a)*r*stats[i]
+let y=cy+Math.sin(a)*r*stats[i]
 
 ctx.beginPath()
 ctx.arc(x,y,3,0,Math.PI*2)
@@ -179,22 +180,22 @@ const name=[
 ]
 
 return `
-コア領域
+■ コア領域
 ${name[dom]}
 
-思考傾向
-${name[dom]}優位の判断
+■ 思考傾向
+${name[dom]}中心思考
 
-行動傾向
-${name[dom]}中心行動
+■ 行動傾向
+${name[dom]}優位行動
 
-今日の影響
+■ 今日の影響
 ${name[today]}
 
-注意領域
+■ 注意領域
 ${name[weak]}
 
-総合
+■ 総合
 ${name[dom]}優位構造
 `
 }
