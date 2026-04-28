@@ -33,6 +33,11 @@ margin:0 0 20px 0;
 font-size:28px;
 }
 
+.subtitle{
+opacity:0.8;
+margin-bottom:20px;
+}
+
 button{
 background:linear-gradient(90deg,#6366f1,#8b5cf6);
 border:none;
@@ -57,12 +62,6 @@ color:white;
 canvas{
 margin-top:20px;
 }
-
-.resultText{
-margin-top:15px;
-white-space:pre-line;
-line-height:1.5;
-}
 </style>
 </head>
 
@@ -72,37 +71,49 @@ line-height:1.5;
 
 <!-- スタート画面 -->
 <div id="start" class="screen active">
-<h1>STARCODE64</h1>
+
+<h1>スターコード64</h1>
+
+<div class="subtitle">
+あなたの意識コードを診断します
+</div>
+
 <button onclick="goInput()">START</button>
+
 </div>
 
 <!-- 入力画面 -->
 <div id="input" class="screen">
 
-<h1>入力</h1>
+<h1>スターコード64</h1>
+
+<div class="subtitle">
+情報を入力してください
+</div>
 
 <input id="today" type="date">
-
 <input id="birth" placeholder="生年月日 1990-01-01">
-
 <input id="time" placeholder="出生時間 12:30">
-
 <input id="place" placeholder="出生地 Tokyo">
 
-<button onclick="run()">診断</button>
+<button onclick="run()">診断する</button>
 
 </div>
 
 <!-- 結果画面 -->
 <div id="result" class="screen">
 
-<h1 id="code"></h1>
+<h1>スターコード64</h1>
+
+<div class="subtitle">
+あなたの意識コードを診断します
+</div>
+
+<div id="codeText"></div>
 
 <canvas id="canvas" width="280" height="280"></canvas>
 
-<div class="resultText" id="text"></div>
-
-<button onclick="back()">戻る</button>
+<button onclick="goInput()">戻る</button>
 
 </div>
 
@@ -110,7 +121,7 @@ line-height:1.5;
 
 <script>
 
-let starCode=0;
+let starCode=10;
 
 function show(id){
 document.querySelectorAll(".screen")
@@ -121,15 +132,10 @@ document.getElementById(id).classList.add("active")
 
 function goInput(){
 
-// 今日の日付自動
-let today=new Date().toISOString().substr(0,10);
-document.getElementById("today").value=today;
+let today=new Date().toISOString().substr(0,10)
+document.getElementById("today").value=today
 
 show("input")
-}
-
-function back(){
-show("start")
 }
 
 function run(){
@@ -152,13 +158,10 @@ render()
 
 function render(){
 
-document.getElementById("code")
-.innerText="あなたのコード : "+starCode
+document.getElementById("codeText").innerHTML=
+"<h2>あなたのコード : "+starCode+"</h2>"
 
 draw()
-
-document.getElementById("text")
-.innerText=getMeaning(starCode)
 }
 
 function draw(){
@@ -172,9 +175,8 @@ let cx=140
 let cy=140
 let r=110
 
-// 円
+// 外円グラデーション
 let g=ctx.createRadialGradient(cx,cy,10,cx,cy,r)
-
 g.addColorStop(0,"#0f172a")
 g.addColorStop(1,"#020617")
 
@@ -183,14 +185,14 @@ ctx.arc(cx,cy,r,0,Math.PI*2)
 ctx.fillStyle=g
 ctx.fill()
 
-// 光
+// 外光
 ctx.beginPath()
 ctx.arc(cx,cy,r,0,Math.PI*2)
 ctx.strokeStyle="rgba(139,92,246,0.4)"
 ctx.lineWidth=10
 ctx.stroke()
 
-// 点
+// 光点
 let angle=(Math.PI*2/64)*(starCode-1)
 
 let dotR=20
@@ -211,34 +213,6 @@ ctx.beginPath()
 ctx.arc(x,y,5,0,Math.PI*2)
 ctx.fillStyle="#fff176"
 ctx.fill()
-}
-
-// コード意味
-function getMeaning(n){
-
-const text=[
-
-"始まりの意識。新しい流れを作る力。",
-"直感優位の判断。内面感覚が鍵。",
-"創造と表現。個性の発揮。",
-"安定と構築。基盤を作る。",
-"変化と自由。移動のエネルギー。",
-"調和と関係性。人との繋がり。",
-"探求と内省。深い理解。",
-"拡張と成功。外への展開。",
-
-"バランス調整の意識。",
-"転換期のエネルギー。",
-"意識の再構築。",
-"感覚の目覚め。",
-"変容の入り口。",
-"統合の流れ。",
-"次元移行の兆し。",
-"循環の完成。"
-
-]
-
-return text[(n-1)%text.length]
 
 }
 
