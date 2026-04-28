@@ -6,63 +6,128 @@
 
 <style>
 body{
-  font-family: sans-serif;
-  padding: 20px;
+  margin:0;
+  font-family: "Helvetica Neue", sans-serif;
+  background: radial-gradient(circle at top, #0b1020, #05060a);
+  color:#e6e6e6;
 }
 
-/* ■ 画面管理 */
+/* ■ 画面 */
 .screen{
   display:none;
+  min-height:100vh;
+  padding:40px;
+  box-sizing:border-box;
 }
 
 .active{
   display:block;
 }
 
-/* ■ 入力 */
+/* =========================
+   ■ スタート画面
+========================= */
+#startScreen{
+  text-align:center;
+  background: radial-gradient(circle at center, #1a1f3a, #05060a);
+}
+
+#startScreen h1{
+  font-size:30px;
+  letter-spacing:3px;
+  margin-top:120px;
+}
+
+#startScreen p{
+  opacity:0.7;
+  margin-bottom:40px;
+}
+
+/* =========================
+   ■ 入力画面
+========================= */
+#inputScreen{
+  background: linear-gradient(180deg, #0c1224, #05060a);
+}
+
 input{
   display:block;
-  margin:10px 0;
-  padding:8px;
-  width:220px;
+  margin:12px 0;
+  padding:12px;
+  width:260px;
+  border:none;
+  border-radius:6px;
+  background:#151a2f;
+  color:#fff;
+  outline:none;
+  border:1px solid #2a3355;
 }
 
-/* ■ ボタン */
+input:focus{
+  border-color:#5aa7ff;
+  box-shadow:0 0 10px rgba(90,167,255,0.3);
+}
+
 button{
-  padding:10px 14px;
-  margin-top:10px;
+  padding:12px 18px;
+  margin-top:14px;
+  border:none;
+  border-radius:6px;
+  background: linear-gradient(90deg,#4a7dff,#6bd4ff);
+  color:#000;
+  font-weight:bold;
+  cursor:pointer;
 }
 
-/* ■ 結果テキスト */
+/* =========================
+   ■ 結果画面
+========================= */
+#resultScreen{
+  background: radial-gradient(circle at center, #070a14, #02030a);
+}
+
 #resultText{
   white-space: pre-line;
-  margin-top: 20px;
-  padding: 10px;
-  border: 1px solid #ccc;
+  margin-top:20px;
+  padding:15px;
+  border:1px solid #2a3355;
+  background: rgba(20,25,50,0.5);
+  border-radius:8px;
 }
 
 /* ■ 円グラフ */
 canvas{
   margin-top:20px;
-  border:1px solid #ddd;
-  display:block;
+  border-radius:50%;
+  background: radial-gradient(circle at center, #0a0f22, #02030a);
+  box-shadow:0 0 30px rgba(90,167,255,0.15);
+}
+
+/* ■ 戻るボタン */
+.backBtn{
+  background:#222b44;
+  color:#fff;
 }
 </style>
 </head>
 
 <body>
 
-<!-- ■ スタート画面 -->
+<!-- =========================
+■ スタート画面
+========================= -->
 <div id="startScreen" class="screen active">
 
-  <h1>スターコード64</h1>
-  <p>あなたの構造を解析するシステム</p>
+  <h1>STAR CODE 64</h1>
+  <p>Self Structure Analysis System</p>
 
-  <button onclick="goInput()">開始する</button>
+  <button onclick="goInput()">ENTER SYSTEM</button>
 
 </div>
 
-<!-- ■ 入力画面 -->
+<!-- =========================
+■ 入力画面
+========================= -->
 <div id="inputScreen" class="screen">
 
   <h2>入力</h2>
@@ -75,7 +140,9 @@ canvas{
 
 </div>
 
-<!-- ■ 結果画面 -->
+<!-- =========================
+■ 結果画面
+========================= -->
 <div id="resultScreen" class="screen">
 
   <h2>診断結果</h2>
@@ -84,7 +151,8 @@ canvas{
 
   <canvas id="canvas" width="400" height="400"></canvas>
 
-  <button onclick="back()">戻る</button>
+  <br>
+  <button class="backBtn" onclick="back()">RETURN</button>
 
 </div>
 
@@ -92,27 +160,26 @@ canvas{
 
 let stats = Array(64).fill(0);
 
-// ----------------------
+// =========================
 // ■ 画面切替
-// ----------------------
+// =========================
 function show(id){
-
   document.querySelectorAll(".screen")
     .forEach(e => e.classList.remove("active"));
-
   document.getElementById(id).classList.add("active");
 }
 
-// ----------------------
-// ■ スタート → 入力
-// ----------------------
 function goInput(){
   show("inputScreen");
 }
 
-// ----------------------
-// ■ 入力 → 診断
-// ----------------------
+function back(){
+  show("inputScreen");
+}
+
+// =========================
+// ■ 診断生成
+// =========================
 function run(){
 
   let place = document.getElementById("birthPlace").value;
@@ -129,20 +196,12 @@ function run(){
   }
 
   show("resultScreen");
-
   render();
 }
 
-// ----------------------
-// ■ 戻る
-// ----------------------
-function back(){
-  show("inputScreen");
-}
-
-// ----------------------
+// =========================
 // ■ 意味定義
-// ----------------------
+// =========================
 function getMeaning(i){
 
   const m = [
@@ -159,9 +218,9 @@ function getMeaning(i){
   return m[i-1];
 }
 
-// ----------------------
-// ■ 円マップ
-// ----------------------
+// =========================
+// ■ 円マップ描画
+// =========================
 function draw(){
 
   const c = document.getElementById("canvas");
@@ -183,46 +242,122 @@ function draw(){
 
     ctx.beginPath();
     ctx.arc(x,y,3,0,Math.PI*2);
-    ctx.fillStyle = "rgba(0,0,0,0.6)";
+    ctx.fillStyle = "rgba(180,200,255,0.7)";
     ctx.fill();
   }
 
   ctx.beginPath();
   ctx.arc(cx,cy,r,0,Math.PI*2);
-  ctx.strokeStyle = "#ccc";
+  ctx.strokeStyle = "#2a3355";
   ctx.stroke();
 }
 
-// ----------------------
-// ■ レポート
-// ----------------------
+// =========================
+// ■ 深層レポート
+// =========================
 function getReport(){
 
   let max = 0;
   let idx = 0;
+  let total = 0;
 
   for(let i=0;i<64;i++){
+    total += stats[i];
     if(stats[i] > max){
       max = stats[i];
       idx = i;
     }
   }
 
+  let avg = total / 64;
+
+  let domainScore = Array(8).fill(0);
+
+  for(let i=0;i<64;i++){
+    domainScore[i % 8] += stats[i];
+  }
+
+  let domIdx = 0;
+  let domMax = 0;
+
+  for(let i=0;i<8;i++){
+    if(domainScore[i] > domMax){
+      domMax = domainScore[i];
+      domIdx = i;
+    }
+  }
+
+  const domainName = [
+    "自己認識領域",
+    "関係性領域",
+    "行動領域",
+    "環境適応領域",
+    "思考構造領域",
+    "感情処理領域",
+    "習慣時間領域",
+    "直感統合領域"
+  ];
+
+  let today = new Date();
+  let todayDomain = domainName[today.getDate() % 8];
+
+  let weakIdx = 0;
+  let weakVal = Infinity;
+
+  for(let i=0;i<8;i++){
+    if(domainScore[i] < weakVal){
+      weakVal = domainScore[i];
+      weakIdx = i;
+    }
+  }
+
+  let variance = 0;
+  for(let i=0;i<64;i++){
+    variance += Math.abs(stats[i] - avg);
+  }
+  variance /= 64;
+
+  let trend =
+    variance > 1.8 ? "強い変動構造（外的影響優位）"
+  : variance > 1.2 ? "中程度の揺らぎ（調整期）"
+  : "安定構造（内的統合優位）";
+
   return ""
-  + "■ 主要傾向：\n"
+  + "■ 構造分析レポート\n\n"
+
+  + "【コア構造】\n"
   + getMeaning(idx+1) + "\n\n"
-  + "■ 解説：\n"
-  + "この領域の性質が現在強く働いています。\n"
-  + "意識的に活用することで安定します。";
+
+  + "【平均構造】\n"
+  + avg.toFixed(2) + "\n\n"
+
+  + "【支配領域】\n"
+  + domainName[domIdx] + "\n\n"
+
+  + "【今日の影響領域】\n"
+  + todayDomain + "\n\n"
+
+  + "【注意領域】\n"
+  + domainName[weakIdx] + "\n\n"
+
+  + "【変化傾向】\n"
+  + trend + "\n\n"
+
+  + "【構造解釈】\n"
+  + "現在は「" + domainName[domIdx] + "」を中心とした構造で動作しています。\n"
+  + "同時に「" + domainName[weakIdx] + "」の補完が必要な局面です。\n\n"
+
+  + "【行動指針】\n"
+  + "・強い領域は認識して制御する\n"
+  + "・弱い領域は補強ではなく循環で整える\n"
+  + "・日次影響に過度に同調しない\n";
 }
 
-// ----------------------
-// ■ 描画
-// ----------------------
+// =========================
+// ■ 描画統合
+// =========================
 function render(){
-
   document.getElementById("resultText").innerText = getReport();
-
   draw();
 }
 
