@@ -8,211 +8,155 @@
 body{
 margin:0;
 font-family:sans-serif;
-background:linear-gradient(180deg,#020617,#0b0f2a);
+background:linear-gradient(180deg,#020617,#070b20);
 color:white;
 display:flex;
 justify-content:center;
 align-items:center;
 height:100vh;
+overflow:hidden;
 }
 
-.card{
-width:360px;
-background:#1e293b;
-border-radius:20px;
-padding:30px;
-box-shadow:0 20px 40px rgba(0,0,0,0.5);
+.container{
 text-align:center;
 }
 
-.screen{display:none;}
-.active{display:block;}
-
-h1{
-margin:0 0 20px 0;
-font-size:28px;
-}
-
-.subtitle{
-opacity:0.8;
+.title{
+font-size:32px;
+letter-spacing:2px;
 margin-bottom:20px;
 }
 
+.card{
+width:340px;
+height:520px;
+overflow:hidden;
+border-radius:20px;
+background:rgba(255,255,255,0.05);
+backdrop-filter:blur(10px);
+}
+
+.slider{
+display:flex;
+width:1360px;
+transition:.5s;
+}
+
+.screen{
+width:340px;
+padding:30px;
+box-sizing:border-box;
+}
+
+.start{
+font-size:48px;
+color:#ff3b3b;
+margin-top:40px;
+}
+
+.circle{
+width:220px;
+height:220px;
+margin:30px auto;
+border-radius:50%;
+background:radial-gradient(circle,#111 0%,#020617 70%);
+box-shadow:0 0 40px rgba(120,120,255,.3);
+}
+
+.input{
+margin:20px 0;
+opacity:.8;
+}
+
 button{
-background:linear-gradient(90deg,#6366f1,#8b5cf6);
-border:none;
-padding:12px 26px;
-border-radius:10px;
-color:white;
-font-size:16px;
-cursor:pointer;
-margin-top:15px;
-}
-
-input{
-width:100%;
-padding:10px;
-margin-top:10px;
-border-radius:8px;
-border:none;
-background:#0f172a;
-color:white;
-}
-
-canvas{
 margin-top:20px;
+padding:10px 20px;
+border:none;
+border-radius:10px;
+background:linear-gradient(90deg,#6366f1,#8b5cf6);
+color:white;
+}
+
+.code{
+font-size:28px;
+margin-top:10px;
 }
 </style>
 </head>
 
 <body>
 
+<div class="container">
+
+<div class="title">STAR CODE64</div>
+
 <div class="card">
 
-<!-- スタート画面 -->
-<div id="start" class="screen active">
+<div class="slider" id="slider">
 
-<h1>スターコード64</h1>
+<!-- 画面1 -->
+<div class="screen">
 
-<div class="subtitle">
-あなたの意識コードを診断します
-</div>
+<div class="start">START</div>
 
-<button onclick="goInput()">START</button>
+<div class="circle"></div>
 
-</div>
-
-<!-- 入力画面 -->
-<div id="input" class="screen">
-
-<h1>スターコード64</h1>
-
-<div class="subtitle">
-情報を入力してください
-</div>
-
-<input id="today" type="date">
-<input id="birth" placeholder="生年月日 1990-01-01">
-<input id="time" placeholder="出生時間 12:30">
-<input id="place" placeholder="出生地 Tokyo">
-
-<button onclick="run()">診断する</button>
+<button onclick="go(1)">START</button>
 
 </div>
 
-<!-- 結果画面 -->
-<div id="result" class="screen">
+<!-- 画面2 -->
+<div class="screen">
 
-<h1>スターコード64</h1>
+<div class="input">Enter birth date</div>
+<div class="input">Enter birth time</div>
+<div class="input">Enter birth place</div>
 
-<div class="subtitle">
-あなたの意識コードを診断します
+<button onclick="go(2)">Diagnose</button>
+
 </div>
 
-<div id="codeText"></div>
+<!-- 画面3 -->
+<div class="screen">
 
-<canvas id="canvas" width="280" height="280"></canvas>
+<div>あなたの意識コードを診断します</div>
 
-<button onclick="goInput()">戻る</button>
+<div class="code">あなたのコード : 10</div>
 
+<div class="circle"></div>
+
+<button onclick="go(3)">詳細</button>
+
+</div>
+
+<!-- 画面4 -->
+<div class="screen">
+
+<div style="font-size:24px;margin-bottom:20px;">
+Diagnosis Result
+</div>
+
+<div class="circle"></div>
+
+<div style="margin-top:20px;">
+ここに詳細文章
+</div>
+
+<button onclick="go(0)">戻る</button>
+
+</div>
+
+</div>
 </div>
 
 </div>
 
 <script>
 
-let starCode=10;
+function go(n){
 
-function show(id){
-document.querySelectorAll(".screen")
-.forEach(e=>e.classList.remove("active"))
-
-document.getElementById(id).classList.add("active")
-}
-
-function goInput(){
-
-let today=new Date().toISOString().substr(0,10)
-document.getElementById("today").value=today
-
-show("input")
-}
-
-function run(){
-
-let t=document.getElementById("today").value
-let b=document.getElementById("birth").value
-let ti=document.getElementById("time").value
-let p=document.getElementById("place").value
-
-let seed=(t+b+ti+p)
-.split("")
-.reduce((a,b)=>a+b.charCodeAt(0),0)
-
-starCode=(seed%64)+1
-
-show("result")
-
-render()
-}
-
-function render(){
-
-document.getElementById("codeText").innerHTML=
-"<h2>あなたのコード : "+starCode+"</h2>"
-
-draw()
-}
-
-function draw(){
-
-const c=document.getElementById("canvas")
-const ctx=c.getContext("2d")
-
-ctx.clearRect(0,0,280,280)
-
-let cx=140
-let cy=140
-let r=110
-
-// 外円グラデーション
-let g=ctx.createRadialGradient(cx,cy,10,cx,cy,r)
-g.addColorStop(0,"#0f172a")
-g.addColorStop(1,"#020617")
-
-ctx.beginPath()
-ctx.arc(cx,cy,r,0,Math.PI*2)
-ctx.fillStyle=g
-ctx.fill()
-
-// 外光
-ctx.beginPath()
-ctx.arc(cx,cy,r,0,Math.PI*2)
-ctx.strokeStyle="rgba(139,92,246,0.4)"
-ctx.lineWidth=10
-ctx.stroke()
-
-// 光点
-let angle=(Math.PI*2/64)*(starCode-1)
-
-let dotR=20
-
-let x=cx+Math.cos(angle)*dotR
-let y=cy+Math.sin(angle)*dotR
-
-let glow=ctx.createRadialGradient(x,y,0,x,y,15)
-glow.addColorStop(0,"#fff")
-glow.addColorStop(1,"rgba(255,255,200,0)")
-
-ctx.beginPath()
-ctx.arc(x,y,12,0,Math.PI*2)
-ctx.fillStyle=glow
-ctx.fill()
-
-ctx.beginPath()
-ctx.arc(x,y,5,0,Math.PI*2)
-ctx.fillStyle="#fff176"
-ctx.fill()
+document.getElementById("slider")
+.style.transform="translateX(-"+(n*340)+"px)"
 
 }
 
