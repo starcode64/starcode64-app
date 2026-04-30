@@ -18,7 +18,7 @@ height:100vh;
 
 .app{
 width:360px;height:640px;
-background:#0f172a;
+background:#020617;
 border-radius:20px;
 overflow:hidden;
 position:relative;
@@ -35,33 +35,38 @@ transition:0.4s;
 
 .active{transform:translateX(0);}
 
+.title{
+text-align:center;
+font-size:24px;
+margin-bottom:10px;
+}
+
+.card{
+background:rgba(255,255,255,0.05);
+border-radius:20px;
+padding:20px;
+}
+
 .center{
 display:flex;
 flex-direction:column;
-justify-content:center;
 align-items:center;
+justify-content:center;
 height:100%;
 }
 
-.circle{
-width:200px;height:200px;
-border-radius:50%;
-background:radial-gradient(circle,#facc15,#020617);
-box-shadow:0 0 40px rgba(255,255,255,0.2);
-margin-bottom:30px;
-}
-
 button{
-padding:10px 20px;
+padding:10px;
 border:none;
 border-radius:10px;
-background:#6366f1;
+background:linear-gradient(45deg,#6366f1,#8b5cf6);
 color:white;
+width:80%;
+margin-top:20px;
 }
 
 .form-row{
 display:flex;
-justify-content:space-between;
 align-items:center;
 margin-top:10px;
 }
@@ -72,12 +77,16 @@ font-size:13px;
 }
 
 input,select{
-width:55%;
+width:60%;
 padding:6px;
 border-radius:8px;
 border:none;
 }
 
+canvas{
+display:block;
+margin:10px auto;
+}
 </style>
 </head>
 
@@ -87,15 +96,17 @@ border:none;
 <!-- ① START -->
 <div id="s1" class="screen active">
 <div class="center">
-<div class="circle"></div>
+<div class="title">STARCODE64</div>
+<div class="card">
+<canvas id="startCircle" width="280" height="280"></canvas>
 <button onclick="next(2)">スタート</button>
+</div>
 </div>
 </div>
 
 <!-- ② INPUT -->
 <div id="s2" class="screen">
-
-<h3>情報入力</h3>
+<div class="title">情報入力</div>
 
 <div class="form-row">
 <label>今日の日付</label>
@@ -121,21 +132,24 @@ border:none;
 <input id="place" placeholder="東京都">
 </div>
 
-<button style="margin-top:20px;width:100%" onclick="go()">診断開始</button>
-
+<button onclick="go()">診断開始</button>
 </div>
 
 <!-- ③ RESULT -->
 <div id="s3" class="screen">
+<div class="title">あなたのコード</div>
+
+<div class="card">
 <div id="resultText"></div>
-<canvas id="cv" width="200" height="200"></canvas>
+<canvas id="resultCircle" width="280" height="280"></canvas>
 <button onclick="showDetail()">詳細</button>
+</div>
 </div>
 
 <!-- ④ DETAIL -->
 <div id="s4" class="screen">
+<div class="title">診断詳細</div>
 <div id="detail"></div>
-<canvas id="chart" width="300" height="150"></canvas>
 <button onclick="next(1)">戻る</button>
 </div>
 
@@ -152,101 +166,103 @@ document.getElementById("s"+n).classList.add("active")
 
 function go(){
 
-let today = document.getElementById("today").value
-let birth = document.getElementById("birth").value
-let time  = document.getElementById("time").value
-let place = document.getElementById("place").value
-let ampm  = document.getElementById("ampm").value
+let today=document.getElementById("today").value
+let birth=document.getElementById("birth").value
+let time=document.getElementById("time").value
+let place=document.getElementById("place").value
+let ampm=document.getElementById("ampm").value
 
 if(!birth){
 alert("生年月日を入力してください")
 return
 }
 
-// 午前午後変換
 if(ampm=="午後" && time.length==4){
-let h = parseInt(time.slice(0,2)) + 12
-time = h.toString() + time.slice(2)
+let h=parseInt(time.slice(0,2))+12
+time=h.toString()+time.slice(2)
 }
 
-// シード生成
-let seed = (today + birth + time + place)
+let seed=(today+birth+time+place)
 .split("")
 .reduce((a,b)=>a+b.charCodeAt(0),0)
 
-star = (seed % 64) + 1
-daily = ((seed + new Date().getDate()) % 64) + 1
+star=(seed%64)+1
+daily=((seed+new Date().getDate())%64)+1
 
-document.getElementById("resultText").innerText =
-`本質コード：${star}
-今日のコード：${daily}`
+document.getElementById("resultText").innerText=
+`コード：${star}`
 
-draw()
+drawCircle("resultCircle", star)
+
 next(3)
 }
 
-function draw(){
+// ★ここが核心（円グラフ描画）
+function drawCircle(id, code){
 
-let c=document.getElementById("cv")
+let c=document.getElementById(id)
 let ctx=c.getContext("2d")
 
-ctx.clearRect(0,0,200,200)
+let w=c.width,h=c.height
+let cx=w/2,cy=h/2
+let r=100
 
-let cx=100,cy=100,r=80
+ctx.clearRect(0,0,w,h)
 
-function pos(code){
-let a=(Math.PI*2/64)*(code-1)
-return {x:cx+Math.cos(a)*r,y:cy+Math.sin(a)*r}
-}
-
-let s=pos(star)
-let d=pos(daily)
+// 外グラデーション
+let grad=ctx.createRadialGradient(cx,cy,10,cx,cy,r)
+grad.addColorStop(0,"#0f172a")
+grad.addColorStop(1,"#020617")
 
 ctx.beginPath()
-ctx.moveTo(s.x,s.y)
-ctx.lineTo(d.x,d.y)
-ctx.strokeStyle="white"
+ctx.arc(cx,cy,r,0,Math.PI*2)
+ctx.fillStyle=grad
+ctx.fill()
+
+// 発光リング
+ctx.beginPath()
+ctx.arc(cx,cy,r,0,Math.PI*2)
+ctx.strokeStyle="rgba(139,92,246,0.3)"
+ctx.lineWidth=15
 ctx.stroke()
 
-ctx.beginPath()
-ctx.arc(s.x,s.y,6,0,Math.PI*2)
-ctx.fillStyle="cyan"
-ctx.fill()
+// 光点位置
+let angle=(Math.PI*2/64)*(code-1)
+let x=cx+Math.cos(angle)*r*0.9
+let y=cy+Math.sin(angle)*r*0.9
+
+// 光点
+let glow=ctx.createRadialGradient(x,y,1,x,y,20)
+glow.addColorStop(0,"#fff")
+glow.addColorStop(1,"rgba(255,255,0,0.2)")
 
 ctx.beginPath()
-ctx.arc(d.x,d.y,6,0,Math.PI*2)
-ctx.fillStyle="red"
+ctx.arc(x,y,8,0,Math.PI*2)
+ctx.fillStyle=glow
+ctx.fill()
+
+// 中心光
+let centerGlow=ctx.createRadialGradient(cx,cy,1,cx,cy,30)
+centerGlow.addColorStop(0,"#fff")
+centerGlow.addColorStop(1,"rgba(255,255,0,0.1)")
+
+ctx.beginPath()
+ctx.arc(cx,cy,15,0,Math.PI*2)
+ctx.fillStyle=centerGlow
 ctx.fill()
 }
+
+// 初期表示
+drawCircle("startCircle",10)
 
 function showDetail(){
 
-let txt=`
-【分析】
-
-本質コード：${star}
-今日コード：${daily}
-
-現在は${daily%2==0?"安定期":"変化期"}です。
+document.getElementById("detail").innerText=
+`あなたのコード${star}は、
+変化と循環のエネルギーを持っています。
 `
 
-document.getElementById("detail").innerText=txt
-
-drawChart()
 next(4)
-}
-
-function drawChart(){
-let ctx=document.getElementById("chart").getContext("2d")
-
-ctx.beginPath()
-for(let i=0;i<10;i++){
-let y=150-Math.random()*150
-if(i==0) ctx.moveTo(0,y)
-else ctx.lineTo(i*30,y)
-}
-ctx.strokeStyle="cyan"
-ctx.stroke()
 }
 
 </script>
