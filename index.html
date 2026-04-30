@@ -7,158 +7,271 @@
 <style>
 body{
 margin:0;
-font-family:sans-serif;
-background:linear-gradient(180deg,#020617,#070b20);
+font-family:-apple-system,BlinkMacSystemFont;
+background:radial-gradient(circle at top,#0f172a,#020617);
 color:white;
 display:flex;
 justify-content:center;
 align-items:center;
 height:100vh;
-overflow:hidden;
 }
 
-.container{
-text-align:center;
-}
-
-.title{
-font-size:32px;
-letter-spacing:2px;
-margin-bottom:20px;
-}
-
-.card{
-width:340px;
-height:520px;
-overflow:hidden;
-border-radius:20px;
+.app{
+width:360px;
+height:640px;
+border-radius:30px;
 background:rgba(255,255,255,0.05);
-backdrop-filter:blur(10px);
-}
-
-.slider{
-display:flex;
-width:1360px;
-transition:.5s;
+backdrop-filter:blur(20px);
+box-shadow:0 20px 60px rgba(0,0,0,0.6);
+overflow:hidden;
+position:relative;
 }
 
 .screen{
-width:340px;
-padding:30px;
+position:absolute;
+top:0;
+left:0;
+width:100%;
+height:100%;
+padding:20px;
 box-sizing:border-box;
+overflow:auto;
+transform:translateX(100%);
+opacity:0;
+transition:all 0.4s ease;
 }
 
-.start{
-font-size:48px;
-color:#ff3b3b;
-margin-top:40px;
+.screen.active{
+transform:translateX(0);
+opacity:1;
+z-index:2;
 }
 
-.circle{
-width:220px;
-height:220px;
-margin:30px auto;
-border-radius:50%;
-background:radial-gradient(circle,#111 0%,#020617 70%);
-box-shadow:0 0 40px rgba(120,120,255,.3);
-}
+.screen.exit-left{transform:translateX(-100%);}
+.screen.exit-right{transform:translateX(100%);}
 
-.input{
-margin:20px 0;
-opacity:.8;
-}
+.center{text-align:center;margin-top:100px;}
 
 button{
+width:100%;
 margin-top:20px;
-padding:10px 20px;
+padding:12px;
+border-radius:14px;
 border:none;
-border-radius:10px;
 background:linear-gradient(90deg,#6366f1,#8b5cf6);
 color:white;
 }
 
-.code{
-font-size:28px;
+input{
+width:100%;
+padding:10px;
 margin-top:10px;
+border-radius:10px;
+border:none;
+background:#0f172a;
+color:white;
+}
+
+canvas{display:block;margin:15px auto;}
+
+.card{
+background:rgba(255,255,255,0.05);
+padding:15px;
+border-radius:15px;
+margin-top:10px;
+}
+
+.section{font-size:13px;margin-top:10px;line-height:1.6;}
+
+.splash{
+position:absolute;
+width:100%;
+height:100%;
+background:black;
+display:flex;
+flex-direction:column;
+justify-content:center;
+align-items:center;
+z-index:10;
+animation:fadeOut 2.5s forwards;
+}
+
+@keyframes fadeOut{
+0%{opacity:1;}
+80%{opacity:1;}
+100%{opacity:0;visibility:hidden;}
 }
 </style>
 </head>
 
 <body>
 
-<div class="container">
+<div class="app">
 
-<div class="title">STAR CODE64</div>
+<div id="splash">
+<h1>STARCODE64</h1>
+</div>
 
+<!-- START -->
+<div id="s1" class="screen active">
+<div class="center">
+<h2>START</h2>
+<button onclick="next(2)">開始</button>
+</div>
+</div>
+
+<!-- INPUT -->
+<div id="s2" class="screen">
+<input id="birth" type="date">
+<input id="time" type="time">
+<input id="place" placeholder="出生地">
+
+<input id="p_birth" type="date">
+<input id="p_time" type="time">
+<input id="p_place" placeholder="相手">
+
+<button onclick="goResult()">診断</button>
+</div>
+
+<!-- RESULT -->
+<div id="s3" class="screen">
 <div class="card">
-
-<div class="slider" id="slider">
-
-<!-- 画面1 -->
-<div class="screen">
-
-<div class="start">START</div>
-
-<div class="circle"></div>
-
-<button onclick="go(1)">START</button>
-
+<div id="codeText"></div>
+<canvas id="canvas" width="220" height="220"></canvas>
+</div>
+<button onclick="next(4)">詳細</button>
 </div>
 
-<!-- 画面2 -->
-<div class="screen">
-
-<div class="input">Enter birth date</div>
-<div class="input">Enter birth time</div>
-<div class="input">Enter birth place</div>
-
-<button onclick="go(2)">Diagnose</button>
-
+<!-- DETAIL -->
+<div id="s4" class="screen">
+<div class="card">
+<canvas id="c4" width="220" height="220"></canvas>
+<div id="detail"></div>
 </div>
 
-<!-- 画面3 -->
-<div class="screen">
+<canvas id="chart" width="300" height="150"></canvas>
 
-<div>あなたの意識コードを診断します</div>
+<button onclick="saveResult()">保存</button>
+<button onclick="showPaid()">有料レポート</button>
+<div id="paid" style="white-space:pre-line;"></div>
 
-<div class="code">あなたのコード : 10</div>
-
-<div class="circle"></div>
-
-<button onclick="go(3)">詳細</button>
-
-</div>
-
-<!-- 画面4 -->
-<div class="screen">
-
-<div style="font-size:24px;margin-bottom:20px;">
-Diagnosis Result
-</div>
-
-<div class="circle"></div>
-
-<div style="margin-top:20px;">
-ここに詳細文章
-</div>
-
-<button onclick="go(0)">戻る</button>
-
-</div>
-
-</div>
+<button onclick="next(1)">戻る</button>
 </div>
 
 </div>
 
 <script>
 
-function go(n){
+let starCode=1,dailyCode=1,partnerCode=1,seedBase=0
+let rotation=0,pulse=0,current=1
 
-document.getElementById("slider")
-.style.transform="translateX(-"+(n*340)+"px)"
+function next(n){
+let c=document.getElementById("s"+current)
+let nx=document.getElementById("s"+n)
 
+if(n>current){c.classList.add("exit-left")}
+else{c.classList.add("exit-right")}
+
+nx.classList.add("active")
+
+setTimeout(()=>{
+c.classList.remove("active","exit-left","exit-right")
+},400)
+
+current=n
 }
+
+function goResult(){
+
+let birth=birthVal("birth","time","place")
+let p=birthVal("p_birth","p_time","p_place")
+
+seedBase=birth
+starCode=(birth%64)+1
+partnerCode=(p%64)+1
+
+updateDaily()
+
+document.getElementById("codeText").innerText=
+"あなた:"+starCode+" / 今日:"+dailyCode+" / 相手:"+partnerCode
+
+draw("canvas")
+
+next(3)
+}
+
+function birthVal(b,t,p){
+return (document.getElementById(b).value+
+document.getElementById(t).value+
+document.getElementById(p).value)
+.split("").reduce((a,b)=>a+b.charCodeAt(0),0)
+}
+
+function updateDaily(){
+let d=new Date()
+let seed=d.getFullYear()+d.getMonth()+d.getDate()
+dailyCode=((seedBase+seed)%64)+1
+}
+
+function draw(id){
+
+const c=document.getElementById(id)
+const ctx=c.getContext("2d")
+
+function loop(){
+
+ctx.clearRect(0,0,220,220)
+
+let cx=110,cy=110,r=90
+
+rotation+=0.002
+pulse+=0.05
+
+for(let i=0;i<64;i++){
+let a=(Math.PI*2/64)*i+rotation
+let x=cx+Math.cos(a)*r
+let y=cy+Math.sin(a)*r
+ctx.beginPath()
+ctx.arc(x,y,1,0,Math.PI*2)
+ctx.fillStyle="#444"
+ctx.fill()
+}
+
+drawPoint(ctx,starCode,r,"#00eaff",6+Math.sin(pulse)*2)
+drawPoint(ctx,dailyCode,r,"#ff3366",5+Math.cos(pulse)*2)
+drawPoint(ctx,partnerCode,r,"#22ff88",5)
+
+requestAnimationFrame(loop)
+}
+loop()
+}
+
+function drawPoint(ctx,code,r,color,size){
+let cx=110,cy=110
+let a=(Math.PI*2/64)*(code-1)+rotation
+let x=cx+Math.cos(a)*r
+let y=cy+Math.sin(a)*r
+
+ctx.beginPath()
+ctx.arc(x,y,size,0,Math.PI*2)
+ctx.fillStyle=color
+ctx.fill()
+}
+
+function saveResult(){
+let h=JSON.parse(localStorage.getItem("star")||"[]")
+h.push({d:new Date().toLocaleDateString(),s:starCode})
+localStorage.setItem("star",JSON.stringify(h))
+alert("保存")
+}
+
+function showPaid(){
+document.getElementById("paid").innerText=
+"完全診断レポート\nあなたの本質コード:"+starCode+
+"\n行動指針:決断する"
+}
+
+window.onload=()=>setTimeout(()=>document.getElementById("splash").style.display="none",2500)
 
 </script>
 
