@@ -7,255 +7,248 @@
 <style>
 body{
 margin:0;
-font-family:sans-serif;
-background:linear-gradient(180deg,#020617,#070b20);
+background:#020617;
 color:white;
+font-family:-apple-system;
 display:flex;
 justify-content:center;
 align-items:center;
 height:100vh;
 }
 
-.container{text-align:center;}
-
-.title{
-font-size:32px;
-margin-bottom:20px;
-}
-
-.card{
-width:340px;
-height:520px;
-background:rgba(255,255,255,0.05);
-border-radius:20px;
-padding:30px;
-box-sizing:border-box;
-backdrop-filter:blur(10px);
-overflow:auto;
-}
-
-.screen{display:none;}
-.active{display:block;}
-
-.start{
-font-size:48px;
-color:#ff3b3b;
-margin-top:40px;
-}
-
-canvas{
-margin:20px auto;
-display:block;
-}
-
-input{
-width:90%;
-padding:10px;
-margin:10px 0;
-border-radius:8px;
-border:none;
+.app{
+width:360px;height:640px;
 background:#0f172a;
-color:white;
+border-radius:20px;
+overflow:hidden;
+position:relative;
+}
+
+.screen{
+position:absolute;
+width:100%;height:100%;
+padding:20px;
+box-sizing:border-box;
+transform:translateX(100%);
+transition:0.4s;
+}
+
+.active{transform:translateX(0);}
+
+.center{
+display:flex;
+flex-direction:column;
+justify-content:center;
+align-items:center;
+height:100%;
+}
+
+.circle{
+width:200px;height:200px;
+border-radius:50%;
+background:radial-gradient(circle,#facc15,#020617);
+box-shadow:0 0 40px rgba(255,255,255,0.2);
+margin-bottom:30px;
 }
 
 button{
-margin-top:15px;
 padding:10px 20px;
 border:none;
 border-radius:10px;
-background:linear-gradient(90deg,#6366f1,#8b5cf6);
+background:#6366f1;
 color:white;
 }
 
-.code{
-font-size:26px;
+.form-row{
+display:flex;
+justify-content:space-between;
+align-items:center;
 margin-top:10px;
 }
 
-.section{
-margin-top:15px;
-text-align:left;
-font-size:14px;
-line-height:1.6;
+label{
+width:40%;
+font-size:13px;
 }
+
+input,select{
+width:55%;
+padding:6px;
+border-radius:8px;
+border:none;
+}
+
 </style>
 </head>
 
 <body>
+<div class="app">
 
-<div class="container">
-
-<div class="title">STAR CODE64</div>
-
-<div class="card">
-
-<!-- START -->
+<!-- ① START -->
 <div id="s1" class="screen active">
-<div class="start">START</div>
-<canvas id="c1" width="220" height="220"></canvas>
-<button onclick="next(2)">START</button>
+<div class="center">
+<div class="circle"></div>
+<button onclick="next(2)">スタート</button>
+</div>
 </div>
 
-<!-- INPUT -->
+<!-- ② INPUT -->
 <div id="s2" class="screen">
 
-<input id="birth" type="date">
-<input id="time" type="time">
-<input id="place" type="text" placeholder="出生地">
+<h3>情報入力</h3>
 
-<button onclick="goResult()">診断する</button>
+<div class="form-row">
+<label>今日の日付</label>
+<input id="today" placeholder="20260430">
+</div>
+
+<div class="form-row">
+<label>生年月日</label>
+<input id="birth" placeholder="19900101">
+</div>
+
+<div class="form-row">
+<label>出生時間</label>
+<select id="ampm">
+<option>午前</option>
+<option>午後</option>
+</select>
+<input id="time" placeholder="2030">
+</div>
+
+<div class="form-row">
+<label>出生地</label>
+<input id="place" placeholder="東京都">
+</div>
+
+<button style="margin-top:20px;width:100%" onclick="go()">診断開始</button>
 
 </div>
 
-<!-- RESULT -->
+<!-- ③ RESULT -->
 <div id="s3" class="screen">
-
-<div id="codeText" class="code"></div>
-
-<canvas id="canvas" width="220" height="220"></canvas>
-
-<button onclick="next(4)">詳細</button>
-
+<div id="resultText"></div>
+<canvas id="cv" width="200" height="200"></canvas>
+<button onclick="showDetail()">詳細</button>
 </div>
 
-<!-- DETAIL -->
+<!-- ④ DETAIL -->
 <div id="s4" class="screen">
-
-<div class="code">診断結果</div>
-
-<canvas id="c4" width="220" height="220"></canvas>
-
 <div id="detail"></div>
-
+<canvas id="chart" width="300" height="150"></canvas>
 <button onclick="next(1)">戻る</button>
-
 </div>
 
-</div>
 </div>
 
 <script>
 
-let starCode=1
+let star=1,daily=1
 
 function next(n){
-document.querySelectorAll(".screen")
-.forEach(e=>e.classList.remove("active"))
+document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"))
 document.getElementById("s"+n).classList.add("active")
 }
 
-// 診断
-function goResult(){
+function go(){
 
-let birth=document.getElementById("birth").value
-let time=document.getElementById("time").value
-let place=document.getElementById("place").value
+let today = document.getElementById("today").value
+let birth = document.getElementById("birth").value
+let time  = document.getElementById("time").value
+let place = document.getElementById("place").value
+let ampm  = document.getElementById("ampm").value
 
-let seed=(birth+time+place)
+if(!birth){
+alert("生年月日を入力してください")
+return
+}
+
+// 午前午後変換
+if(ampm=="午後" && time.length==4){
+let h = parseInt(time.slice(0,2)) + 12
+time = h.toString() + time.slice(2)
+}
+
+// シード生成
+let seed = (today + birth + time + place)
 .split("")
 .reduce((a,b)=>a+b.charCodeAt(0),0)
 
-starCode=(seed%64)+1
+star = (seed % 64) + 1
+daily = ((seed + new Date().getDate()) % 64) + 1
 
-document.getElementById("codeText").innerText=
-"あなたのコード : "+starCode
+document.getElementById("resultText").innerText =
+`本質コード：${star}
+今日のコード：${daily}`
 
-draw("canvas")
-
+draw()
 next(3)
 }
 
-// 円描画
-function draw(id){
+function draw(){
 
-const c=document.getElementById(id)
-const ctx=c.getContext("2d")
+let c=document.getElementById("cv")
+let ctx=c.getContext("2d")
 
-ctx.clearRect(0,0,220,220)
+ctx.clearRect(0,0,200,200)
 
-let cx=110
-let cy=110
-let r=90
+let cx=100,cy=100,r=80
+
+function pos(code){
+let a=(Math.PI*2/64)*(code-1)
+return {x:cx+Math.cos(a)*r,y:cy+Math.sin(a)*r}
+}
+
+let s=pos(star)
+let d=pos(daily)
 
 ctx.beginPath()
-ctx.arc(cx,cy,r,0,Math.PI*2)
-ctx.strokeStyle="#2a3a66"
+ctx.moveTo(s.x,s.y)
+ctx.lineTo(d.x,d.y)
+ctx.strokeStyle="white"
 ctx.stroke()
 
-for(let i=0;i<64;i++){
-let a=(Math.PI*2/64)*i
-let x=cx+Math.cos(a)*r
-let y=cy+Math.sin(a)*r
 ctx.beginPath()
-ctx.arc(x,y,1,0,Math.PI*2)
-ctx.fillStyle="#444"
+ctx.arc(s.x,s.y,6,0,Math.PI*2)
+ctx.fillStyle="cyan"
+ctx.fill()
+
+ctx.beginPath()
+ctx.arc(d.x,d.y,6,0,Math.PI*2)
+ctx.fillStyle="red"
 ctx.fill()
 }
 
-let angle=(Math.PI*2/64)*(starCode-1)
-let x=cx+Math.cos(angle)*r
-let y=cy+Math.sin(angle)*r
+function showDetail(){
 
-ctx.beginPath()
-ctx.arc(x,y,6,0,Math.PI*2)
-ctx.fillStyle="#00eaff"
-ctx.fill()
-}
+let txt=`
+【分析】
 
-// 詳細生成
-function generateDetail(){
+本質コード：${star}
+今日コード：${daily}
 
-let type=starCode%8
-
-const core=[
-"強い自己確立型",
-"直感優位型",
-"創造表現型",
-"安定構築型",
-"変化適応型",
-"関係重視型",
-"探求深化型",
-"拡張成功型"
-]
-
-return `
-<div class="section">
-■ コア特性  
-${core[type]}
-</div>
-
-<div class="section">
-■ 行動傾向  
-外部環境よりも内的衝動に基づいて行動する傾向が強く、
-流れを読むよりも自ら流れを作るタイプです。
-</div>
-
-<div class="section">
-■ 思考傾向  
-論理と直感の中間に位置し、独自の判断基準を持ちます。
-</div>
-
-<div class="section">
-■ 注意点  
-自分のペースを優先しすぎると、周囲とのズレが生じやすい。
-</div>
-
-<div class="section">
-■ 今日の流れ  
-小さな選択が未来に影響を与える日。
-慎重さと直感のバランスが鍵。
-</div>
+現在は${daily%2==0?"安定期":"変化期"}です。
 `
-}
 
-// 詳細画面へ
-document.querySelector("#s3 button").onclick = function(){
-draw("c4")
-document.getElementById("detail").innerHTML = generateDetail()
+document.getElementById("detail").innerText=txt
+
+drawChart()
 next(4)
 }
 
-</script>
+function drawChart(){
+let ctx=document.getElementById("chart").getContext("2d")
 
+ctx.beginPath()
+for(let i=0;i<10;i++){
+let y=150-Math.random()*150
+if(i==0) ctx.moveTo(0,y)
+else ctx.lineTo(i*30,y)
+}
+ctx.strokeStyle="cyan"
+ctx.stroke()
+}
+
+</script>
 </body>
 </html>
