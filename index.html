@@ -7,8 +7,8 @@
 <style>
 body{
 margin:0;
-font-family:-apple-system,BlinkMacSystemFont;
-background:radial-gradient(circle at top,#0f172a,#020617);
+font-family:sans-serif;
+background:linear-gradient(180deg,#020617,#070b20);
 color:white;
 display:flex;
 justify-content:center;
@@ -16,219 +16,174 @@ align-items:center;
 height:100vh;
 }
 
-.app{
-width:360px;
-height:640px;
-border-radius:30px;
+.container{text-align:center;}
+
+.title{
+font-size:32px;
+margin-bottom:20px;
+}
+
+.card{
+width:340px;
+height:520px;
 background:rgba(255,255,255,0.05);
-backdrop-filter:blur(20px);
-box-shadow:0 20px 60px rgba(0,0,0,0.6);
-overflow:hidden;
-position:relative;
-}
-
-.screen{
-position:absolute;
-top:0;
-left:0;
-width:100%;
-height:100%;
-padding:20px;
+border-radius:20px;
+padding:30px;
 box-sizing:border-box;
+backdrop-filter:blur(10px);
 overflow:auto;
-transform:translateX(100%);
-opacity:0;
-transition:all 0.4s ease;
 }
 
-.screen.active{
-transform:translateX(0);
-opacity:1;
-z-index:2;
+.screen{display:none;}
+.active{display:block;}
+
+.start{
+font-size:48px;
+color:#ff3b3b;
+margin-top:40px;
 }
 
-.screen.exit-left{transform:translateX(-100%);}
-.screen.exit-right{transform:translateX(100%);}
-
-.center{text-align:center;margin-top:100px;}
-
-button{
-width:100%;
-margin-top:20px;
-padding:12px;
-border-radius:14px;
-border:none;
-background:linear-gradient(90deg,#6366f1,#8b5cf6);
-color:white;
+canvas{
+margin:20px auto;
+display:block;
 }
 
 input{
-width:100%;
+width:90%;
 padding:10px;
-margin-top:10px;
-border-radius:10px;
+margin:10px 0;
+border-radius:8px;
 border:none;
 background:#0f172a;
 color:white;
 }
 
-canvas{display:block;margin:15px auto;}
+button{
+margin-top:15px;
+padding:10px 20px;
+border:none;
+border-radius:10px;
+background:linear-gradient(90deg,#6366f1,#8b5cf6);
+color:white;
+}
 
-.card{
-background:rgba(255,255,255,0.05);
-padding:15px;
-border-radius:15px;
+.code{
+font-size:26px;
 margin-top:10px;
 }
 
-.section{font-size:13px;margin-top:10px;line-height:1.6;}
-
-.splash{
-position:absolute;
-width:100%;
-height:100%;
-background:black;
-display:flex;
-flex-direction:column;
-justify-content:center;
-align-items:center;
-z-index:10;
-animation:fadeOut 2.5s forwards;
-}
-
-@keyframes fadeOut{
-0%{opacity:1;}
-80%{opacity:1;}
-100%{opacity:0;visibility:hidden;}
+.section{
+margin-top:15px;
+text-align:left;
+font-size:14px;
+line-height:1.6;
 }
 </style>
 </head>
 
 <body>
 
-<div class="app">
+<div class="container">
 
-<div id="splash">
-<h1>STARCODE64</h1>
-</div>
+<div class="title">STAR CODE64</div>
+
+<div class="card">
 
 <!-- START -->
 <div id="s1" class="screen active">
-<div class="center">
-<h2>START</h2>
-<button onclick="next(2)">開始</button>
-</div>
+<div class="start">START</div>
+<canvas id="c1" width="220" height="220"></canvas>
+<button onclick="next(2)">START</button>
 </div>
 
 <!-- INPUT -->
 <div id="s2" class="screen">
+
 <input id="birth" type="date">
 <input id="time" type="time">
-<input id="place" placeholder="出生地">
+<input id="place" type="text" placeholder="出生地">
 
-<input id="p_birth" type="date">
-<input id="p_time" type="time">
-<input id="p_place" placeholder="相手">
+<button onclick="goResult()">診断する</button>
 
-<button onclick="goResult()">診断</button>
 </div>
 
 <!-- RESULT -->
 <div id="s3" class="screen">
-<div class="card">
-<div id="codeText"></div>
+
+<div id="codeText" class="code"></div>
+
 <canvas id="canvas" width="220" height="220"></canvas>
-</div>
+
 <button onclick="next(4)">詳細</button>
+
 </div>
 
 <!-- DETAIL -->
 <div id="s4" class="screen">
-<div class="card">
+
+<div class="code">診断結果</div>
+
 <canvas id="c4" width="220" height="220"></canvas>
+
 <div id="detail"></div>
-</div>
-
-<canvas id="chart" width="300" height="150"></canvas>
-
-<button onclick="saveResult()">保存</button>
-<button onclick="showPaid()">有料レポート</button>
-<div id="paid" style="white-space:pre-line;"></div>
 
 <button onclick="next(1)">戻る</button>
+
 </div>
 
+</div>
 </div>
 
 <script>
 
-let starCode=1,dailyCode=1,partnerCode=1,seedBase=0
-let rotation=0,pulse=0,current=1
+let starCode=1
 
 function next(n){
-let c=document.getElementById("s"+current)
-let nx=document.getElementById("s"+n)
-
-if(n>current){c.classList.add("exit-left")}
-else{c.classList.add("exit-right")}
-
-nx.classList.add("active")
-
-setTimeout(()=>{
-c.classList.remove("active","exit-left","exit-right")
-},400)
-
-current=n
+document.querySelectorAll(".screen")
+.forEach(e=>e.classList.remove("active"))
+document.getElementById("s"+n).classList.add("active")
 }
 
+// 診断
 function goResult(){
 
-let birth=birthVal("birth","time","place")
-let p=birthVal("p_birth","p_time","p_place")
+let birth=document.getElementById("birth").value
+let time=document.getElementById("time").value
+let place=document.getElementById("place").value
 
-seedBase=birth
-starCode=(birth%64)+1
-partnerCode=(p%64)+1
+let seed=(birth+time+place)
+.split("")
+.reduce((a,b)=>a+b.charCodeAt(0),0)
 
-updateDaily()
+starCode=(seed%64)+1
 
 document.getElementById("codeText").innerText=
-"あなた:"+starCode+" / 今日:"+dailyCode+" / 相手:"+partnerCode
+"あなたのコード : "+starCode
 
 draw("canvas")
 
 next(3)
 }
 
-function birthVal(b,t,p){
-return (document.getElementById(b).value+
-document.getElementById(t).value+
-document.getElementById(p).value)
-.split("").reduce((a,b)=>a+b.charCodeAt(0),0)
-}
-
-function updateDaily(){
-let d=new Date()
-let seed=d.getFullYear()+d.getMonth()+d.getDate()
-dailyCode=((seedBase+seed)%64)+1
-}
-
+// 円描画
 function draw(id){
 
 const c=document.getElementById(id)
 const ctx=c.getContext("2d")
 
-function loop(){
-
 ctx.clearRect(0,0,220,220)
 
-let cx=110,cy=110,r=90
+let cx=110
+let cy=110
+let r=90
 
-rotation+=0.002
-pulse+=0.05
+ctx.beginPath()
+ctx.arc(cx,cy,r,0,Math.PI*2)
+ctx.strokeStyle="#2a3a66"
+ctx.stroke()
 
 for(let i=0;i<64;i++){
-let a=(Math.PI*2/64)*i+rotation
+let a=(Math.PI*2/64)*i
 let x=cx+Math.cos(a)*r
 let y=cy+Math.sin(a)*r
 ctx.beginPath()
@@ -237,41 +192,68 @@ ctx.fillStyle="#444"
 ctx.fill()
 }
 
-drawPoint(ctx,starCode,r,"#00eaff",6+Math.sin(pulse)*2)
-drawPoint(ctx,dailyCode,r,"#ff3366",5+Math.cos(pulse)*2)
-drawPoint(ctx,partnerCode,r,"#22ff88",5)
-
-requestAnimationFrame(loop)
-}
-loop()
-}
-
-function drawPoint(ctx,code,r,color,size){
-let cx=110,cy=110
-let a=(Math.PI*2/64)*(code-1)+rotation
-let x=cx+Math.cos(a)*r
-let y=cy+Math.sin(a)*r
+let angle=(Math.PI*2/64)*(starCode-1)
+let x=cx+Math.cos(angle)*r
+let y=cy+Math.sin(angle)*r
 
 ctx.beginPath()
-ctx.arc(x,y,size,0,Math.PI*2)
-ctx.fillStyle=color
+ctx.arc(x,y,6,0,Math.PI*2)
+ctx.fillStyle="#00eaff"
 ctx.fill()
 }
 
-function saveResult(){
-let h=JSON.parse(localStorage.getItem("star")||"[]")
-h.push({d:new Date().toLocaleDateString(),s:starCode})
-localStorage.setItem("star",JSON.stringify(h))
-alert("保存")
+// 詳細生成
+function generateDetail(){
+
+let type=starCode%8
+
+const core=[
+"強い自己確立型",
+"直感優位型",
+"創造表現型",
+"安定構築型",
+"変化適応型",
+"関係重視型",
+"探求深化型",
+"拡張成功型"
+]
+
+return `
+<div class="section">
+■ コア特性  
+${core[type]}
+</div>
+
+<div class="section">
+■ 行動傾向  
+外部環境よりも内的衝動に基づいて行動する傾向が強く、
+流れを読むよりも自ら流れを作るタイプです。
+</div>
+
+<div class="section">
+■ 思考傾向  
+論理と直感の中間に位置し、独自の判断基準を持ちます。
+</div>
+
+<div class="section">
+■ 注意点  
+自分のペースを優先しすぎると、周囲とのズレが生じやすい。
+</div>
+
+<div class="section">
+■ 今日の流れ  
+小さな選択が未来に影響を与える日。
+慎重さと直感のバランスが鍵。
+</div>
+`
 }
 
-function showPaid(){
-document.getElementById("paid").innerText=
-"完全診断レポート\nあなたの本質コード:"+starCode+
-"\n行動指針:決断する"
+// 詳細画面へ
+document.querySelector("#s3 button").onclick = function(){
+draw("c4")
+document.getElementById("detail").innerHTML = generateDetail()
+next(4)
 }
-
-window.onload=()=>setTimeout(()=>document.getElementById("splash").style.display="none",2500)
 
 </script>
 
